@@ -60,6 +60,7 @@ class GenerateSpec extends Base
     foreach ($model->net->page->transition as $transition)
     {
       $id             = (string) $transition->attributes()['id'];
+      $name           = (string) $transition->name->text;
       $preconditions  = array();
       $postconditions = array();
       foreach ($pre [$id] as $arc)
@@ -83,6 +84,7 @@ class GenerateSpec extends Base
           $value = 1;
         $postconditions[] = "\t\t${target}' = ${target} + ${value}";
       }
+      fwrite($fp, "\t# Transition ${id}: ${name}\n");
       fwrite($fp, implode(",\n", $preconditions));
       fwrite($fp, " ->\n");
       fwrite($fp, implode(",\n", $postconditions));
