@@ -39,6 +39,7 @@ $application->add(new \MCC\Command\FormulasCheck());
 $application->add(new \MCC\Command\FormulasToText());
 $application->add(new \MCC\Command\FormulasToVIS());
 $application->add(new \MCC\Command\GenerateC());
+$application->add(new \MCC\Command\GenerateSpec());
 $application->add(new \MCC\Command\GenerateLua());
 $application->add(new \MCC\Command\ToCami());
 $application->add(new \MCC\Command\ToCosy());
