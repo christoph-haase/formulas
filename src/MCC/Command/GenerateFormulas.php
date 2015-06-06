@@ -144,8 +144,8 @@ EOT;
     else
       $this->model = $this->pt_model;
 
-    if ($this->sn_model) echo "mcc: generate: have COL model: $this->sn_file\n";
-    if ($this->pt_model) echo "mcc: generate: have PT  model: $this->pt_file\n";
+//    if ($this->sn_model) echo "mcc: generate: have COL model: $this->sn_file\n";
+//    if ($this->pt_model) echo "mcc: generate: have PT  model: $this->pt_file\n";
 
     $this->smt_formula_filter = new SmtFormulaFilter ($this->console_output, $this->places);
 
@@ -165,11 +165,11 @@ EOT;
     {
       // hack to avoid memory overflow in this model ...
       $nr = $this->quantity * 7;
-      echo "mcc: HACK on 'TokenRing', reduced number of intermmediate formulas\n";
+//      echo "mcc: HACK on 'TokenRing', reduced number of intermmediate formulas\n";
     }
 
     // generate $nr formulas, store them in the array $formulas[]
-    echo "mcc: generating $nr formulas\n";
+//    echo "mcc: generating $nr formulas\n";
     $formulas = array();
     for ($i = 0; $i < $nr; $i++)
     {
@@ -178,9 +178,9 @@ EOT;
     }
 
     // filter out those of bad quality
-    echo "mcc: generate: filtering out formulas\n";
+//    echo "mcc: generate: filtering out formulas\n";
     $filtered_formulas = $this->filter_out_formulas ($formulas);
-    echo "mcc: generate: after filtering out: got " . count ($filtered_formulas) . " formulas\n";
+//    echo "mcc: generate: after filtering out: got " . count ($filtered_formulas) . " formulas\n";
     assert (count ($filtered_formulas) <= $this->quantity);
 
     // if we were unable to produce $this->quantity formulas, complete with
@@ -200,15 +200,18 @@ EOT;
 
     // save all formulas into one xml file
     $this->save_formulas ($filtered_formulas, $this->output);
-	  echo "mcc: generate: wrote " . count ($filtered_formulas) . " formulas in '$this->output'\n";
+//  echo "mcc: generate: wrote " . count ($filtered_formulas) . " formulas in '$this->output'\n";
 
     // execute, if requested, the 'unfold' and 'to-text' commands
     if ($this->chain)
     {
-      foreach (array(
+      $chained = array(
         'formula:unfold',
         'formula:to-text'
-      ) as $c)
+      );
+      if ($this->subcategory == SUBCAT_REACHABILITY_SPEC)
+        $chained [] = 'formula:to-spec';
+      foreach ($chained as $c)
       {
         $command = $this->getApplication()->find($c);
         $arguments = array(
@@ -226,7 +229,7 @@ EOT;
 
   private function save_formulas ($formulas, $path, $ids = null)
   {
-	  echo "mcc: generate: writing " . count ($formulas) . " formulas to file '$path'\n";
+//  echo "mcc: generate: writing " . count ($formulas) . " formulas to file '$path'\n";
     $xml_tree = $this->load_xml('<property-set xmlns="http://mcc.lip6.fr/"/>');
     for ($i = 0; $i < count ($formulas); $i++)
     {
@@ -291,13 +294,13 @@ EOT;
 
   private function filter_out_formulas_smt ($formulas)
   {
-    echo "mcc: generate: using the SMT filter on " . count ($formulas) . " formulas\n";
+ //   echo "mcc: generate: using the SMT filter on " . count ($formulas) . " formulas\n";
     $result = array ();
     foreach ($formulas as $formula)
     {
       if ($this->smt_formula_filter->filter_out ($formula))
       {
-        echo "mcc: generate:  discarding formula\n";
+//        echo "mcc: generate:  discarding formula\n";
         continue;
       }
 
@@ -318,8 +321,8 @@ EOT;
       if ($this->pt_model)
       {
         // we have a PT equivalent
-        echo "mcc: generate: unfolding COL formulas to PT\n";
-        echo "mcc: generate: " . count ($formulas) . " formulas\n";
+//        echo "mcc: generate: unfolding COL formulas to PT\n";
+//        echo "mcc: generate: " . count ($formulas) . " formulas\n";
         $unfolded_formulas = array ();
         $unfolder = new FormulaUnfolder ($this->sn_model, $this->pt_model);
         foreach ($formulas as $f)
@@ -328,19 +331,19 @@ EOT;
           $unfolder->unfold ($uf);
           $unfolded_formulas[] = $uf;
         }
-        echo "mcc: generate: formulas unfolded\n";
+//        echo "mcc: generate: formulas unfolded\n";
       }
       else
       {
         // we don't have a PT equivalent, we don't filter :(
-        echo "mcc: generate: we don't have a PT equivalent model, no filtering!!!!\n";
+//        echo "mcc: generate: we don't have a PT equivalent model, no filtering!!!!\n";
         return array_slice ($formulas, 0, $this->quantity);
       }
     }
     else
     {
       // we are processing a PT model, nothing to do
-      echo "mcc: generate: this is a PT model, no need to unfold\n";
+//      echo "mcc: generate: this is a PT model, no need to unfold\n";
       assert ($this->pt_model != null);
       $unfolded_formulas = $formulas;
     }
@@ -362,10 +365,10 @@ EOT;
     $cmd .= "grep '^smc: formulas:' $smcout 1>&2; ";
     $cmd .= "grep '^smc: resources:' $smcout 1>&2; ";
 
-    echo "mcc: generate: $cmd\n";
+//    echo "mcc: generate: $cmd\n";
     exec ($cmd, $output, $retval);
-    echo "mcc: generate: cmd returns with status $retval\n";
-    echo "mcc: generate: cmd output contains " . count ($output) . " lines\n";
+//    echo "mcc: generate: cmd returns with status $retval\n";
+//    echo "mcc: generate: cmd output contains " . count ($output) . " lines\n";
 
     // handle execution errors
     if ($retval != 0)
