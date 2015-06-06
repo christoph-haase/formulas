@@ -50,9 +50,9 @@ class GenerateSpec extends Base
     {
       $source = (string) $arc->attributes()['source'];
       $target = (string) $arc->attributes()['target'];
-      if (! array_key_exists ($target, $pre ))
+      if (! isset ($pre [$target]))
         $pre  [$target] = array ();
-      if (! array_key_exists ($source, $post))
+      if (! isset ($post [$source]))
         $post [$source] = array ();
       $pre  [$target] [] = $arc;
       $post [$source] [] = $arc;
@@ -72,7 +72,7 @@ class GenerateSpec extends Base
         $preconditions  [] = "\t${source} >= ${value}";
         $postconditions [] = "\t\t${source}' = ${source} - ${value}";
       }
-      if (! array_key_exists ($id, $post))
+      if (! isset ($post [$id]))
       {
         $post [$id] = array ();
       }
