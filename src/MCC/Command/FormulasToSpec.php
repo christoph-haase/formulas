@@ -74,12 +74,12 @@ class FormulasToSpec extends Base
     foreach ($this->pt_model->net->page->place as $place)
       $i++;
     $padding   = log10 ($i)+3;
-    $variables = array ();
     $result = array();
     foreach ($xml->property as $property)
     {
       try
       {
+        $variables = array ();
         $result[] = $this->translate_property($property, $pre, $padding, $variables);
       }
       catch (\Exception $e) {}
@@ -97,16 +97,31 @@ class FormulasToSpec extends Base
     $description = (string) $property->description;
     $formula     = $this->translate_formula($property->formula->children()[0], $pre, $padding, $variables);
     $output = array ();
-    exec ("echo '${formula}' | booldnf", $output);
-    $output = $output [0];
+    $python = <<<EOS
+from sympy.core           import symbols
+from sympy.logic.boolalg  import to_dnf
+
+EOS;
     $search  = array ();
     $replace = array ();
+    foreach ($variables as $key => $value)
+    {
+      $python .= "${value} = symbols (\"${value}\")\n";
+      $search  [] = $value;
+      $replace [] = $key;
+    }
+    $python .= "print (to_dnf (${formula}))\n";
+    exec ("python -c '${python}'", $output);
+    $output = $output [0];
     foreach ($variables as $key => $value)
     {
       $search  [] = $value;
       $replace [] = $key;
     }
     $formula = str_replace ($search, $replace, $formula);
+    $formula = str_replace ("&", ",", $formula);
+    $formula = str_replace ("|", "\n\t", $formula);
+    $formula = str_replace (array ("(", ")"), "", $formula);
     $result = <<<EOS
 \t# ID: Property {$id}
 \t# "{$description}"
@@ -152,19 +167,19 @@ EOS;
         }
         $targetdisjunction[] = implode("&", $targetconjunction);
       }
-      $result = implode("|", $targetdisjunction);
+      $result = "(" . implode("|", $targetdisjunction) . ")";
       break;
     case 'conjunction':
       $res = array();
       foreach ($formula->children() as $sub)
         $res [] = $this->translate_formula ($sub, $pre, $padding, $variables);
-      $result = implode("&", $res);
+      $result = "(" . implode("&", $res) . ")";
       break;
     case 'disjunction':
       $res = array();
       foreach ($formula->children() as $sub)
         $res [] = $this->translate_formula ($sub, $pre, $padding, $variables);
-      $result = implode("|", $res);
+      $result = "(" . implode("|", $res) . ")";
       break;
     case 'integer-le':
       $res = array();
@@ -172,7 +187,7 @@ EOS;
         $res[] = $this->translate_formula($sub, $pre, $padding, $variables);
       if (count($res) != 2)
       {
-        $this->console_output->writeln("<warning>Error: no support for nary le {$formula->getName()}</warning>");
+        $this->console_output->writeln("<warning>Error: no support for nary le </warning>");
         throw(new \Exception("unsupported subformula"));
       }
       if (is_numeric($res[0]) && !is_numeric($res[1]))
@@ -181,14 +196,14 @@ EOS;
         if (! isset ($variables [$expression]))
         {
           $count = count ($variables)+1;
-          $var   = "v" . str_pad ($i, $padding, "0", STR_PAD_LEFT);
+          $var   = "v" . str_pad ($count, $padding, "0", STR_PAD_LEFT);
           $variables [$expression] = $var;
         }
         $result = $variables [$expression];
       }
       else
       {
-        $this->console_output->writeln("<warning>Error: no support for sums and/or less-than constraints{$formula->getName()}</warning>");
+        $this->console_output->writeln("<warning>Error: no support for less-than constraints place<=*</warning>");
         throw (new \Exception ("unsupported subformula"));
       }
       break;
@@ -203,7 +218,7 @@ EOS;
       }
       if (count($res) != 1)
       {
-        $this->console_output->writeln("<warning>Error: no support for sums {$formula->getName()}</warning>");
+        $this->console_output->writeln("<warning>Error: no support for comparison between places</warning>");
         throw(new \Exception("unsupported subformula"));
       }
       $result = $res[0];
