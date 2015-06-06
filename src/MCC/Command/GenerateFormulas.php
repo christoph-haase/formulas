@@ -17,6 +17,7 @@ use \MCC\Formula\FormulaUnfolder;
 
 const INT_MAX                                 = 9999999;
 
+const SUBCAT_REACHABILITY_SPEC                = "ReachabilitySpec";
 const SUBCAT_REACHABILITY_DEADLOCK            = "ReachabilityDeadlock";
 const SUBCAT_REACHABILITY_FIREABILITY_SIMPLE  = "ReachabilityFireabilitySimple";
 const SUBCAT_REACHABILITY_FIREABILITY         = "ReachabilityFireability";
@@ -89,7 +90,8 @@ class GenerateFormulas extends Base
   </property>
 EOT;
   private $all_subcategories = array (
-        SUBCAT_REACHABILITY_DEADLOCK
+        SUBCAT_REACHABILITY_SPEC
+      , SUBCAT_REACHABILITY_DEADLOCK
       , SUBCAT_REACHABILITY_FIREABILITY_SIMPLE
       , SUBCAT_REACHABILITY_FIREABILITY
       , SUBCAT_REACHABILITY_CARDINALITY
@@ -271,6 +273,7 @@ EOT;
     case SUBCAT_LTL_CARDINALITY :
       return $this->filter_out_formulas_smt ($formulas);
 
+    case SUBCAT_REACHABILITY_SPEC :
     case SUBCAT_REACHABILITY_FIREABILITY :
     case SUBCAT_REACHABILITY_CARDINALITY :
     case SUBCAT_LTL_FIREABILITY_SIMPLE :
@@ -425,8 +428,22 @@ EOT;
     $tmp1               = new Symbol ("tmp-formula1");
     $tmp2               = new Symbol ("tmp-formula2");
 
+    //print ("\n" . $subcategory . "=> " . $subcategory . "\n");
     switch ($subcategory)
     {
+    case $subcategory :
+      $g = new Grammar ($this, $boolean_formula);
+      $g->add_rule (new Rule ($boolean_formula, array ($exists,   $tmp1)));
+      $g->add_rule (new Rule ($tmp1,            array ($finally,  $state_formula)));
+
+      $g->add_rule (new Rule ($state_formula,   array ($and,      $state_formula, $state_formula)));
+      $g->add_rule (new Rule ($state_formula,   array ($or,       $state_formula, $state_formula)));
+      $g->add_rule (new Rule ($state_formula,     array ($is_fireable)));
+      $g->add_rule (new Rule ($state_formula,     array ($leq,      $integer_expression, $tokens_count)));
+      $g->add_rule (new Rule ($integer_expression, array ($integer_constant)));
+      $g->add_rule (new Rule ($integer_expression, array ($tokens_count)));
+      break;
+
     case SUBCAT_REACHABILITY_DEADLOCK :
       $g = new Grammar ($this, $boolean_formula);
       $g->add_rule (new Rule ($boolean_formula, array ($exists,  $tmp1)));
