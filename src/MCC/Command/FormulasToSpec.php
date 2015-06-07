@@ -5,7 +5,6 @@ use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\InputOption;
 
-// Requires boolstuff package
 class FormulasToSpec extends Base
 {
 
