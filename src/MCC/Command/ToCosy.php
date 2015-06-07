@@ -1,11 +1,6 @@
 <?php
 namespace MCC\Command;
 
-use \Symfony\Component\Console\Input\InputOption;
-use \Symfony\Component\Console\Input\InputInterface;
-use \Symfony\Component\Console\Output\OutputInterface;
-use \MCC\Command\Base;
-
 class ToCosy extends Base
 {
 
@@ -42,8 +37,7 @@ class ToCosy extends Base
     fwrite($file, "model.transition = {}\n");
     fwrite($file, "model.arc        = { pre = {}, post = {} }\n");
     fwrite($file, "\n");
-    foreach ($model->net->page->place as $place)
-    {
+    foreach ($model->net->page->place as $place) {
       $id      = (string) $place->attributes()['id'];
       $name    = (string) $place->name->text;
       $marking = (string) $place->initialMarking->text;
@@ -59,8 +53,7 @@ class ToCosy extends Base
       fwrite($file, "end\n");
       $this->progress->advance();
     }
-    foreach ($model->net->page->transition as $transition)
-    {
+    foreach ($model->net->page->transition as $transition) {
       $id   = (string) $transition->attributes()['id'];
       $name = (string) $transition->name->text;
       fwrite($file, "do\n");
@@ -71,8 +64,7 @@ class ToCosy extends Base
       fwrite($file, "end\n");
       $this->progress->advance();
     }
-    foreach ($model->net->page->arc as $arc)
-    {
+    foreach ($model->net->page->arc as $arc) {
       $id        = (string) $arc->attributes()['id'];
       $source    = (string) $arc->attributes()['source'];
       $target    = (string) $arc->attributes()['target'];
@@ -95,5 +87,4 @@ class ToCosy extends Base
     $this->progress->finish();
   }
 
-
-} 
+}

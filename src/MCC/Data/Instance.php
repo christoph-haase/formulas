@@ -2,15 +2,12 @@
 
 namespace MCC\Data;
 
-use \MCC\Data\Formalism;
-use \MCC\Data\Model;
-
 /**
  * @Entity
  * @Table(name="Instance")
  */
-class Instance {
-
+class Instance
+{
   /**
    * @Id
    * @GeneratedValue
@@ -37,7 +34,8 @@ class Instance {
    */
   protected $parameter;
 
-  public function __construct(Model $model, Formalism $formalism, $parameter) {
+  public function __construct(Model $model, Formalism $formalism, $parameter)
+  {
     global $entityManager;
     $entityManager -> persist($this);
     $this -> model = $model;
@@ -46,11 +44,13 @@ class Instance {
     $this -> model -> instances -> add($this);
   }
 
-  public function __toString() {
+  public function __toString()
+  {
     return "{$this->model->name}-{$this->formalism}-{$this->parameter}";
   }
 
-  public function __get($property) {
+  public function __get($property)
+  {
     if (property_exists($this, $property)) {
       return $this -> $property;
     }

@@ -1,11 +1,8 @@
 <?php
 namespace MCC\Command;
 
-use \Symfony\Component\Console\Input\InputOption;
-use \Symfony\Component\Console\Input\InputArgument;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
-use \MCC\Command\Base;
 
 class Order extends Base
 {
@@ -35,61 +32,48 @@ class Order extends Base
     $this->marked_in_cycle = 1;
   }
 
-
   private function find_cycles($id, $start = null, &$stack = array())
   {
     if ($start == null)
       $start = $id;
     if (array_key_exists($start, $this->cycles) &&
       (count($stack) >= count($this->cycles[$start])))
+
       return;
     if (array_key_exists($id, $this->places))
       $stack[$id] = true;
-    if (array_key_exists($id, $this->pre))
-    {
-      foreach ($this->pre[$id] as $succ => $arc)
-      {
+    if (array_key_exists($id, $this->pre)) {
+      foreach ($this->pre[$id] as $succ => $arc) {
 //        echo "start = {$start}, id = {$id}, succ = {$succ}\n";
-        if (array_key_exists($succ, $stack))
-        {
-          if (count($stack) <= 1)
-          {
+        if (array_key_exists($succ, $stack)) {
+          if (count($stack) <= 1) {
             continue;
           }
-          if (! array_key_exists($start, $this->cycles))
-          {
+          if (! array_key_exists($start, $this->cycles)) {
             $rhs_size = count ($stack);
 //            echo "Add cycle of size {$rhs_size}.\n";
             $this->cycles[$start] = $stack;
-          }
-          else
-          {
+          } else {
             $lhs_size = count ($this->cycles[$start]);
             $rhs_size = count ($stack);
-            if ($rhs_size < $lhs_size)
-            {
+            if ($rhs_size < $lhs_size) {
 //              echo "Update cycle of size {$rhs_size}.\n";
               $this->cycles[$start] = $stack;
             }
           }
           /*
-          if (! array_key_exists($start, $this->cycles))
-          {
+          if (! array_key_exists($start, $this->cycles)) {
             $this->cycles[$start] = array();
           }
           ksort($stack);
-          foreach ($this->cycles[$start] as $k => $s)
-          {
+          foreach ($this->cycles[$start] as $k => $s) {
             $ldiff = array_diff_assoc($s, $stack);
             $rdiff = array_diff_assoc($stack, $s);
-            if (count($ldiff) != 0 && count($rdiff) == 0)
-            {
+            if (count($ldiff) != 0 && count($rdiff) == 0) {
               // Nothing to do
-            } else if (count($ldiff) == 0 && count($rdiff) != 0)
-            {
+            } elseif (count($ldiff) == 0 && count($rdiff) != 0) {
               $this->cycles[$start][$k] = $stack;
-            } else if (count($ldiff) == 0 && count($rdiff) == 0)
-            {
+            } elseif (count($ldiff) == 0 && count($rdiff) == 0) {
               continue 2;
             }
           }
@@ -100,14 +84,10 @@ class Order extends Base
           $c = count($this->cycles[$start]);
           echo "# {$c}\n";
           */
-        }
-        else
-        {
-          if (array_key_exists($succ, $this->places))
-          {
+        } else {
+          if (array_key_exists($succ, $this->places)) {
             $initial = (string) $this->places[$succ]->initialMarking->text;
-            if (($initial != NULL) && ($initial != ""))
-            {
+            if (($initial != NULL) && ($initial != "")) {
               continue;
             }
           }
@@ -121,8 +101,7 @@ class Order extends Base
 
   protected function perform()
   {
-    if ($this->pt_model == NULL)
-    {
+    if ($this->pt_model == NULL) {
       return;
     }
     $model = $this->pt_model;
@@ -131,27 +110,22 @@ class Order extends Base
     // 2. for each one, find cycles (directed graph)
     //
     // Build relation between IDs and arcs:
-    foreach ($model->net->page->place as $place)
-    {
+    foreach ($model->net->page->place as $place) {
       $id = (string) $place->attributes()['id'];
       $this->places[$id] = $place;
     }
-    foreach ($model->net->page->transitions as $transition)
-    {
+    foreach ($model->net->page->transitions as $transition) {
       $id = (string) $transition->attributes()['id'];
       $this->transitions[$id] = $transition;
     }
-    foreach ($model->net->page->arc as $arc)
-    {
+    foreach ($model->net->page->arc as $arc) {
       $source = (string) $arc->attributes()['source'];
       $target = (string) $arc->attributes()['target'];
-      if (! array_key_exists($source, $this->pre))
-      {
+      if (! array_key_exists($source, $this->pre)) {
         $this->pre[$source] = array();
       }
       $this->pre[$source][$target] = $arc;
-      if (! array_key_exists($source, $this->post))
-      {
+      if (! array_key_exists($source, $this->post)) {
         $this->post[$target] = array();
       }
       $this->post[$target][$source] = $arc;
@@ -162,38 +136,31 @@ class Order extends Base
     $this->progress->start($this->console_output, $quantity);
     // Search cycles
     $remaining = array();
-    foreach ($model->net->page->place as $place)
-    {
+    foreach ($model->net->page->place as $place) {
       $id = (string) $place->attributes()['id'];
       $remaining[$id] = true;
     }
     $marked = array();
-    foreach ($model->net->page->place as $place)
-    {
+    foreach ($model->net->page->place as $place) {
       $initial = (string) $place->initialMarking->text;
       $id = (string) $place->attributes()['id'];
       if (($initial != NULL) && ($initial != ""))
         $marked[$id] = true;
     }
     $associated = array();
-    while (true)
-    {
+    while (true) {
       $m = array();
-      foreach ($marked as $id => $v)
-      {
+      foreach ($marked as $id => $v) {
         if (array_key_exists($id, $associated))
           continue;
         $this->find_cycles($id);
-        if (array_key_exists($id, $this->cycles))
-        {
-          foreach ($this->cycles[$id] as $k => $v)
-          {
+        if (array_key_exists($id, $this->cycles)) {
+          foreach ($this->cycles[$id] as $k => $v) {
             $associated[$k] = $id;
             unset ($remaining[$k]);
           }
           $this->progress->advance(count($this->cycles[$id]));
-        }
-        else
+        } else
           $m[$id] = true;
       }
       if (count($m) == 0)
@@ -203,24 +170,20 @@ class Order extends Base
     }
     print_r ($this->cycles);
     $groups_default = array();
-    foreach ($this->cycles as $start => $cycle)
-    {
+    foreach ($this->cycles as $start => $cycle) {
       $groups_default[$start] = 0;
     }
     $last_count = 0;
     $divider = 2;
     while (count($remaining) != 0)
-    foreach ($remaining as $id => $v)
-    {
+    foreach ($remaining as $id => $v) {
       echo "Searching id=" . $id . "\n";
       $groups = $groups_default;
       $nb_arcs = 0;
       if (array_key_exists($id, $this->post))
-      foreach ($this->post[$id] as $t => $arc)
-      {
+      foreach ($this->post[$id] as $t => $arc) {
         if (array_key_exists($t, $this->post))
-        foreach ($this->post[$t] as $p => $arc)
-        {
+        foreach ($this->post[$t] as $p => $arc) {
 //            echo $p . "  " . $id . "\n";
           if ($p == $id)
             continue;
@@ -229,8 +192,7 @@ class Order extends Base
           $nb_arcs++;
         }
         if (array_key_exists($t, $this->pre))
-        foreach ($this->pre[$t] as $p => $arc)
-        {
+        foreach ($this->pre[$t] as $p => $arc) {
 //            echo $p . "  " . $id . "\n";
           if ($p == $id)
             continue;
@@ -240,11 +202,9 @@ class Order extends Base
         }
       }
       if (array_key_exists($id, $this->pre))
-      foreach ($this->pre[$id] as $t => $arc)
-      {
+      foreach ($this->pre[$id] as $t => $arc) {
         if (array_key_exists($t, $this->pre))
-        foreach ($this->pre[$t] as $p => $arc)
-        {
+        foreach ($this->pre[$t] as $p => $arc) {
 //            echo $p . "  " . $id . "\n";
           if ($p == $id)
             continue;
@@ -253,8 +213,7 @@ class Order extends Base
           $nb_arcs++;
         }
         if (array_key_exists($t, $this->post))
-        foreach ($this->post[$t] as $p => $arc)
-        {
+        foreach ($this->post[$t] as $p => $arc) {
 //            echo $p . "  " . $id . "\n";
           if ($p == $id)
             continue;
@@ -271,10 +230,7 @@ class Order extends Base
       echo "sum=" . array_sum($groups) . "\n";
       echo "value=" . ($nb_arcs / $divider) . "\n";
       echo "divider=" . $divider . "\n";
-      if (($m == 0) || array_sum($groups) < $nb_arcs / $divider)
-      {}
-      else
-      {
+      if (($m == 0) || array_sum($groups) < $nb_arcs / $divider) {} else {
         echo "here\n";
         $group = array_search($m, $groups);
         unset ($remaining[$id]);
@@ -290,11 +246,9 @@ class Order extends Base
     $this->progress->finish();
 
     // Fix representation of data:
-    foreach ($this->cycles as $place => $cycle)
-    {
+    foreach ($this->cycles as $place => $cycle) {
       $tmp = array();
-      foreach ($cycle as $id => $useless)
-      {
+      foreach ($cycle as $id => $useless) {
         $tmp[] = $id;
       }
       $this->cycles[$place] = $tmp;
@@ -306,8 +260,7 @@ class Order extends Base
 
     // Also output to text:
     $output = array();
-    foreach ($this->cycles as $place => $cycle)
-    {
+    foreach ($this->cycles as $place => $cycle) {
       $output[] = "from " . $place . ": " . implode(", ", $cycle);
     }
     $txt = implode("\n", $output) . "\n";

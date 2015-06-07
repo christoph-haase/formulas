@@ -3,7 +3,6 @@ namespace MCC\Command;
 
 use \Symfony\Component\Console\Command\Command;
 use \Symfony\Component\Console\Input\InputInterface;
-use \Symfony\Component\Console\Input\InputOption;
 use \Symfony\Component\Console\Input\InputArgument;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Formatter\OutputFormatterStyle;
@@ -32,7 +31,7 @@ abstract class Base extends Command
   protected $model_name;
   protected $parameter;
   protected $console_input;
-  public    $console_output; // we need it in CheckFormula, sorry !
+  public $console_output; // we need it in CheckFormula, sorry !
   protected $progress;
 
   protected function configure()
@@ -47,14 +46,14 @@ abstract class Base extends Command
   private function load_model($file)
   {
     $model = NULL;
-    if (file_exists($file) and is_file ($file))
-    {
+    if (file_exists($file) and is_file ($file)) {
       $model = simplexml_load_file($file, NULL, LIBXML_COMPACT);
     }
+
     return $model;
   }
 
-  protected final function execute(InputInterface $input, OutputInterface $output)
+  final protected function execute(InputInterface $input, OutputInterface $output)
   {
     $this->console_input  = $input;
     $this->console_output = $output;
@@ -75,15 +74,13 @@ abstract class Base extends Command
     $this->progress->setProgressCharacter('>');
     $this->progress->setBarWidth(25);
 
-    if (!file_exists($this->root) or !is_dir($this->root))
-    {
+    if (!file_exists($this->root) or !is_dir($this->root)) {
       echo "{$this->root} directory does not exist.\n";
       exit(1);
     }
     $model = $input->getArgument('model');
     $parameter = $input->getArgument('parameter');
-    if (!$model && $parameter)
-    {
+    if (!$model && $parameter) {
       echo "Parameter can only be specified if model is given.\n";
       exit(1);
     }
@@ -94,27 +91,20 @@ abstract class Base extends Command
       '-(COL|PT)-' .
       ($parameter ? '(' . $parameter . ')' : '(.*)') .
       '$';
-    foreach (scandir($this->root) as $entry)
-    {
-      if (is_file($this->root . '/' . $entry))
-      {
+    foreach (scandir($this->root) as $entry) {
+      if (is_file($this->root . '/' . $entry)) {
         try {
           $p = new \PharData($this->root . '/' . $entry);
           $p->extractTo($this->root);
           $output->writeln("<command>Expanded</command> file <instance>{$entry}</instance>");
           unlink($this->root . '/' . $entry);
-        }
-        catch (Exception $e)
-        {}
+        } catch (Exception $e) {}
       }
     }
-    foreach (scandir($this->root) as $entry)
-    {
-      if (is_dir($this->root . '/' . $entry))
-      {
+    foreach (scandir($this->root) as $entry) {
+      if (is_dir($this->root . '/' . $entry)) {
         $matches = array();
-        if (preg_match('/' . $regex . '/u', $entry, $matches))
-        {
+        if (preg_match('/' . $regex . '/u', $entry, $matches)) {
           $instances[] = new Instance($matches[1], $matches[3]);
         }
       }
@@ -123,14 +113,12 @@ abstract class Base extends Command
     $model_length = 0;
     $parameter_length = 0;
     $description_length = 0;
-    foreach ($this->getApplication()->all() as $c)
-    {
+    foreach ($this->getApplication()->all() as $c) {
       $description_length =
         max($description_length, strlen($c->getDescription()));
     }
     // Iterate over instances to perform action:
-    foreach ($instances as $instance)
-    {
+    foreach ($instances as $instance) {
       $this->model_name = $instance->model;
       $this->parameter = $instance->parameter;
       $description = str_pad($this->getDescription(), $description_length);
@@ -159,6 +147,7 @@ abstract class Base extends Command
     $dom->formatOutput = true;
     $dom->loadXML($xml->asXml());
     $dom->preserveWhiteSpace = false;
+
     return $dom->saveXML();
   }
 
@@ -175,18 +164,15 @@ abstract class Base extends Command
   // http://stackoverflow.com/questions/4778865/php-simplexml-addchild-with-another-simplexmlelement
   public function xml_adopt($root, $new)
   {
-    if ($new == null)
-    {
+    if ($new == null) {
       $msg = "Error: xml_adopt: not enough operators to generate formula, internal error.";
       throw new \Exception ($msg);
     }
     $node = $root->addChild($new->getName(), (string) $new);
-    foreach($new->attributes() as $attr => $value)
-    {
+    foreach ($new->attributes() as $attr => $value) {
       $node->addAttribute($attr, $value);
     }
-    foreach($new->children() as $ch)
-    {
+    foreach ($new->children() as $ch) {
       $this->xml_adopt($node, $ch);
     }
   }

@@ -4,8 +4,6 @@ namespace MCC\Command;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\InputOption;
-use \MCC\Command\Base;
-use \MCC\Formula\EquivalentElements;
 use \MCC\Formula\FormulaUnfolder;
 
 class UnfoldFormulas extends Base
@@ -29,8 +27,7 @@ class UnfoldFormulas extends Base
 
   protected function pre_perform(InputInterface $input, OutputInterface $output)
   {
-    if (($this->sn_model == null) || ($this->pt_model == null))
-    {
+    if (($this->sn_model == null) || ($this->pt_model == null)) {
       return;
     }
     $input_path = dirname($this->sn_file);
@@ -41,8 +38,7 @@ class UnfoldFormulas extends Base
 
   protected function perform()
   {
-    if (($this->sn_model == null) || ($this->pt_model == null))
-    {
+    if (($this->sn_model == null) || ($this->pt_model == null)) {
       return;
     }
 
@@ -54,8 +50,7 @@ class UnfoldFormulas extends Base
     $quantity = count($xml->children());
     $this->progress->setRedrawFrequency(max(1, $quantity / 100));
     $this->progress->start($this->console_output, $quantity);
-    foreach ($xml->property as $property)
-    {
+    foreach ($xml->property as $property) {
       $unfolder->unfold ($property->formula->children()[0]);
       $this->progress->advance();
     }

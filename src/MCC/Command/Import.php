@@ -4,13 +4,14 @@ namespace MCC\Command;
 use \Symfony\Component\Console\Command\Command;
 use \Symfony\Component\Console\Input\InputArgument;
 use \Symfony\Component\Console\Input\InputInterface;
-use \Symfony\Component\Console\Input\InputOption;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \MCC\Import\CSV2013;
 use \Doctrine\ORM\Tools\SchemaTool;
 
-class Import extends Command {
-  protected function configure() {
+class Import extends Command
+{
+  protected function configure()
+  {
     $this -> setName('import')
           -> setDescription('Import data.')
           -> addArgument('year', InputArgument::REQUIRED, 'Edition of the MCC?')
@@ -26,7 +27,8 @@ EOF
              );
   }
 
-  protected function execute(InputInterface $input, OutputInterface $output) {
+  protected function execute(InputInterface $input, OutputInterface $output)
+  {
     $this -> generateDatabase($input, $output);
     $year = $input -> getArgument('year');
     $resultsdir = $input -> getArgument('directory');
@@ -38,7 +40,8 @@ EOF
     }
   }
 
-  protected function generateDatabase(InputInterface $input, OutputInterface $output) {
+  protected function generateDatabase(InputInterface $input, OutputInterface $output)
+  {
     global $entityManager;
     $classes = array(
       $entityManager -> getClassMetadata('\MCC\Data\Contest'),

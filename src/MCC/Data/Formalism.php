@@ -6,8 +6,8 @@ namespace MCC\Data;
  * @Entity
  * @Table(name="Formalism")
  */
-class Formalism {
-
+class Formalism
+{
   /**
    * @Id
    * @GeneratedValue
@@ -22,17 +22,20 @@ class Formalism {
    */
   protected $acronym;
 
-  public function __construct($acronym) {
+  public function __construct($acronym)
+  {
     global $entityManager;
     $entityManager -> persist($this);
     $this -> acronym = $acronym;
   }
 
-  public function __toString() {
+  public function __toString()
+  {
     return "{$this->acronym}";
   }
 
-  public function __get($property) {
+  public function __get($property)
+  {
     if (property_exists($this, $property)) {
       return $this -> $property;
     }

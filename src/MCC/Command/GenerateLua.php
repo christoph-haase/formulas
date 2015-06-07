@@ -2,10 +2,8 @@
 namespace MCC\Command;
 
 use \Symfony\Component\Console\Input\InputOption;
-use \Symfony\Component\Console\Input\InputArgument;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
-use \MCC\Command\Base;
 
 class GenerateLua extends Base
 {
@@ -28,8 +26,7 @@ class GenerateLua extends Base
 
   protected function perform()
   {
-    if ($this->pt_model == NULL)
-    {
+    if ($this->pt_model == NULL) {
       return;
     }
     $model = $this->pt_model;
@@ -48,8 +45,7 @@ class GenerateLua extends Base
     $i = 1;
     $dictionary = array();
     fwrite($fp, "local dictionary = {}\n");
-    foreach ($model->net->page->place as $place)
-    {
+    foreach ($model->net->page->place as $place) {
       $id = (string) $place->attributes()['id'];
       fwrite($fp, "dictionary[\"${id}\"] = ${i}\n");
       $dictionary[$id] = $i;
@@ -58,12 +54,10 @@ class GenerateLua extends Base
     }
     // First, output initial state:
     fwrite($fp, "local initial_state = {}\n");
-    foreach ($model->net->page->place as $place)
-    {
+    foreach ($model->net->page->place as $place) {
       $id = (string) $place->attributes()['id'];
       $initial = (string) $place->initialMarking->text;
-      if (($initial == NULL) || ($initial == ""))
-      {
+      if (($initial == NULL) || ($initial == "")) {
         $initial = 0;
       }
       fwrite($fp, "initial_state[${dictionary[$id]}] = ${initial}\n");
@@ -76,17 +70,14 @@ class GenerateLua extends Base
     }
     // Build relation between IDs and arcs:
     $lookup = array();
-    foreach ($model->net->page->arc as $arc)
-    {
+    foreach ($model->net->page->arc as $arc) {
       $source = (string) $arc->attributes()['source'];
-      if (! array_key_exists($source, $lookup))
-      {
+      if (! array_key_exists($source, $lookup)) {
         $lookup[$source] = array();
       }
       $lookup[$source][] = $arc;
       $target = (string) $arc->attributes()['target'];
-      if (! array_key_exists($target, $lookup))
-      {
+      if (! array_key_exists($target, $lookup)) {
         $lookup[$target] = array();
       }
       $lookup[$target][] = $arc;
@@ -94,22 +85,18 @@ class GenerateLua extends Base
     // Then, output next-state computation:
     fwrite($fp, "local function next_state (s)\n");
     fwrite($fp, "  local result = {}\n");
-    foreach ($model->net->page->transition as $transition)
-    {
+    foreach ($model->net->page->transition as $transition) {
       $id = (string) $transition->attributes()['id'];
       $name = (string) $transition->name->text;
       fwrite($fp, "  if true");
-      foreach ($lookup[$id] as $arc)
-      {
+      foreach ($lookup[$id] as $arc) {
         $source = (string) $arc->attributes()['source'];
         $target = (string) $arc->attributes()['target'];
         $value  = (string) $arc->inscription->text;
-        if (($value == NULL) || ($value == ""))
-        {
+        if (($value == NULL) || ($value == "")) {
           $value = 1;
         }
-        if ($target == $id)
-        {
+        if ($target == $id) {
           fwrite($fp, " and s[${dictionary[$source]}] >= ${value}");
         }
       }
@@ -118,31 +105,25 @@ class GenerateLua extends Base
       fwrite($fp, "    for k, v in pairs(s) do\n");
       fwrite($fp, "      r[k] = v\n");
       fwrite($fp, "    end\n");
-      foreach ($lookup[$id] as $arc)
-      {
+      foreach ($lookup[$id] as $arc) {
         $source = (string) $arc->attributes()['source'];
         $target = (string) $arc->attributes()['target'];
         $value  = (string) $arc->inscription->text;
-        if (($value == NULL) || ($value == ""))
-        {
+        if (($value == NULL) || ($value == "")) {
           $value = 1;
         }
-        if ($target == $id)
-        {
+        if ($target == $id) {
           fwrite($fp, "    r[${dictionary[$source]}] = r[${dictionary[$source]}] - ${value}\n");
         }
       }
-      foreach ($lookup[$id] as $arc)
-      {
+      foreach ($lookup[$id] as $arc) {
         $source = (string) $arc->attributes()['source'];
         $target = (string) $arc->attributes()['target'];
         $value  = (string) $arc->inscription->text;
-        if (($value == NULL) || ($value == ""))
-        {
+        if (($value == NULL) || ($value == "")) {
           $value = 1;
         }
-        if ($source == $id)
-        {
+        if ($source == $id) {
           fwrite($fp, "    r[${dictionary[$target]}] = r[${dictionary[$target]}] + ${value}\n");
         }
       }

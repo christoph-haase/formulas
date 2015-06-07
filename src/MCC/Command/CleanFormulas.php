@@ -4,7 +4,6 @@ namespace MCC\Command;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\InputOption;
-use \MCC\Command\Base;
 
 class CleanFormulas extends Base
 {
@@ -42,17 +41,14 @@ class CleanFormulas extends Base
   protected function perform()
   {
     $files = $this->generated_files();
-    foreach (array( $this->sn_file, $this->pt_file ) as $f)
-    {
+    foreach (array( $this->sn_file, $this->pt_file ) as $f) {
       $quantity = count($files);
       $this->progress->setRedrawFrequency($quantity);
       $this->progress->start($this->console_output, $quantity);
       $dir = dirname($f);
-      foreach ($files as $filename)
-      {
+      foreach ($files as $filename) {
         $file = "{$dir}/{$filename}";
-        if (file_exists($file))
-        {
+        if (file_exists($file)) {
           unlink($file);
         }
         $this->progress->advance();

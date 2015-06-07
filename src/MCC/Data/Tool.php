@@ -6,8 +6,8 @@ namespace MCC\Data;
  * @Entity
  * @Table(name="Tool")
  */
-class Tool {
-
+class Tool
+{
   /**
    * @Id
    * @GeneratedValue
@@ -28,21 +28,25 @@ class Tool {
    */
   protected $color = 'black';
 
-  public function __construct($name) {
+  public function __construct($name)
+  {
     global $entityManager;
     $entityManager -> persist($this);
     $this -> name = $name;
   }
 
-  public function __toString() {
+  public function __toString()
+  {
     return "{$this->name}";
   }
 
-  public function setColor($color) {
+  public function setColor($color)
+  {
     $this -> color = $color;
   }
 
-  public function __get($property) {
+  public function __get($property)
+  {
     if (property_exists($this, $property)) {
       return $this -> $property;
     }

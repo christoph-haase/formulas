@@ -1,12 +1,6 @@
 <?php
 namespace MCC\Command;
 
-use \Symfony\Component\Console\Input\InputOption;
-use \Symfony\Component\Console\Input\InputArgument;
-use \Symfony\Component\Console\Input\InputInterface;
-use \Symfony\Component\Console\Output\OutputInterface;
-use \MCC\Command\Base;
-
 class GenerateSpec extends Base
 {
 
@@ -32,8 +26,7 @@ class GenerateSpec extends Base
     fwrite($fp, "vars\n");
     fwrite($fp, "\t");
     $initmarking = array();
-    foreach ($model->net->page->place as $place)
-    {
+    foreach ($model->net->page->place as $place) {
       $id = (string) $place->attributes()['id'];
       fwrite($fp, "${id} ");
       $initial = (string) $place->initialMarking->text;
@@ -46,8 +39,7 @@ class GenerateSpec extends Base
     fwrite($fp, "rules\n");
     $pre  = array ();
     $post = array ();
-    foreach ($model->net->page->arc as $arc)
-    {
+    foreach ($model->net->page->arc as $arc) {
       $source = (string) $arc->attributes()['source'];
       $target = (string) $arc->attributes()['target'];
       if (! isset ($pre [$target]))
@@ -57,14 +49,12 @@ class GenerateSpec extends Base
       $pre  [$target] [] = $arc;
       $post [$source] [] = $arc;
     }
-    foreach ($model->net->page->transition as $transition)
-    {
+    foreach ($model->net->page->transition as $transition) {
       $id             = (string) $transition->attributes()['id'];
       $name           = (string) $transition->name->text;
       $preconditions  = array();
       $postconditions = array();
-      foreach ($pre [$id] as $arc)
-      {
+      foreach ($pre [$id] as $arc) {
         $source = (string) $arc->attributes()['source'];
         $value  = (string) $arc->inscription->text;
         if (($value == NULL) || ($value == ""))
@@ -72,12 +62,10 @@ class GenerateSpec extends Base
         $preconditions  [] = "\t${source} >= ${value}";
         $postconditions [] = "\t\t${source}' = ${source} - ${value}";
       }
-      if (! isset ($post [$id]))
-      {
+      if (! isset ($post [$id])) {
         $post [$id] = array ();
       }
-      foreach ($post [$id] as $arc)
-      {
+      foreach ($post [$id] as $arc) {
         $target = (string) $arc->attributes()['target'];
         $value  = (string) $arc->inscription->text;
         if (($value == NULL) || ($value == ""))
