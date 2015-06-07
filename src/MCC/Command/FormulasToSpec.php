@@ -24,24 +24,60 @@ class FormulasToSpec extends Base
     parent::configure();
   }
 
-  private $pt_input = null;
+  private $pt_path   = null;
+  private $pt_input  = null;
   private $pt_output = null;
+  private $pipes     = null;
 
   protected function pre_perform(InputInterface $input, OutputInterface $output)
   {
-    $pt_path = dirname($this->pt_file);
-    $this->pt_input  = "${pt_path}/{$input->getOption('output')}.xml";
-    $this->pt_output = "${pt_path}/{$input->getOption('output')}.spec";
+    $this->pt_path   = dirname($this->pt_file);
+    $output          = $this->pt_path . "/" . $input->getOption('output');
+    $this->pt_input  = "${output}.xml";
+    $this->pt_output = "${output}.spec";
   }
 
   protected function perform()
   {
     if ($this->pt_model != null)
     {
-      $this->convert(
-        $this->pt_input,
-        $this->pt_output
-      );
+      $error_file = tempnam ($this->pt_path, "sympy-err");
+      $descriptorspec = array(
+         0 => array("pipe", "r"),
+         1 => array("pipe", "w"),
+         2 => array("file", $error_file, "a")
+       );
+      $this->pipes = array ();
+      $process = proc_open('python', $descriptorspec, $this->pipes, $this->pt_path, array ());
+      if (is_resource($process))
+      {
+        stream_set_blocking ($this->pipes [0], 0);
+        stream_set_blocking ($this->pipes [1], 0);
+        $preamble = <<<EOS
+from sympy.core           import symbols
+from sympy.logic.boolalg  import to_dnf
+
+EOS;
+        fwrite ($this->pipes [0], $preamble);
+        flush  ($this->pipes [0]);
+        $output = stream_get_contents ($this->pipes[1]);
+        $this->convert(
+          $this->pt_input,
+          $this->pt_output
+        );
+        fclose ($this->pipes [0]);
+        fclose ($this->pipes [1]);
+        if (proc_close($process) != 0)
+        {
+          $this->console_output->writeln("<error>Error: python errored</error>");
+          $reason = file_get_contents ($error_file);
+          $this->console_output->writeln("<error>${reason}</error>");
+        }
+        else
+          unlink ($error_file);
+      }
+      else
+        $this->console_output->writeln("<error>Error: unable to run python</error>");
     }
   }
 
@@ -97,22 +133,16 @@ class FormulasToSpec extends Base
     $description = (string) $property->description;
     $formula     = $this->translate_formula($property->formula->children()[0], $pre, $padding, $variables);
     $output = array ();
-    $python = <<<EOS
-from sympy.core           import symbols
-from sympy.logic.boolalg  import to_dnf
-
-EOS;
     $search  = array ();
     $replace = array ();
     foreach ($variables as $key => $value)
     {
-      $python .= "${value} = symbols (\"${value}\")\n";
+      fwrite ($this->pipes [0], "${value} = symbols (\"${value}\")\n");
       $search  [] = $value;
       $replace [] = $key;
     }
-    $python .= "print (to_dnf (${formula}))\n";
-    exec ("python -c '${python}'", $output);
-    $output = $output [0];
+    fwrite ($this->pipes [0], "print (to_dnf (${formula}))\n");
+    $output = stream_get_contents ($this->pipes[1]);
     foreach ($variables as $key => $value)
     {
       $search  [] = $value;
