@@ -392,6 +392,7 @@ EOT;
     $deadlock         = new Symbol ("deadlock",         "<deadlock/>",     $this, true);
     $is_fireable      = new Symbol ("is-fireable",      null,              $this, true);
     $leq              = new Symbol ("<=",               "<integer-le/>",   $this, true);
+    $eq               = new Symbol ("==",               "<integer-eq/>",   $this, true);
     $integer_constant = new Symbol ("integer-constant", null,              $this, true);
     $place_bound      = new Symbol ("place-bound",      "<place-bound/>",  $this, true);
     $tokens_count     = new Symbol ("tokens-count",     "<tokens-count/>", $this, true);
@@ -406,9 +407,9 @@ EOT;
     $tmp1               = new Symbol ("tmp-formula1");
     $tmp2               = new Symbol ("tmp-formula2");
 
-    //print ("\n" . $subcategory . "=> " . $subcategory . "\n");
+    //print ("\n" . $subcategory . "=> " . SUBCAT_REACHABILITY_SPEC . "\n");
     switch ($subcategory) {
-    case $subcategory :
+    case SUBCAT_REACHABILITY_SPEC :
       $g = new Grammar ($this, $boolean_formula);
       $g->add_rule (new Rule ($boolean_formula, array ($exists,   $tmp1)));
       $g->add_rule (new Rule ($tmp1,            array ($finally,  $state_formula)));
@@ -416,7 +417,8 @@ EOT;
       $g->add_rule (new Rule ($state_formula,   array ($and,      $state_formula, $state_formula)));
       $g->add_rule (new Rule ($state_formula,   array ($or,       $state_formula, $state_formula)));
       $g->add_rule (new Rule ($state_formula,     array ($is_fireable)));
-      $g->add_rule (new Rule ($state_formula,     array ($leq,      $integer_expression, $tokens_count)));
+      $g->add_rule (new Rule ($state_formula,     array ($leq,      $integer_constant, $tokens_count)));
+      $g->add_rule (new Rule ($state_formula,     array ($eq ,      $integer_constant, $tokens_count)));
       $g->add_rule (new Rule ($integer_expression, array ($integer_constant)));
       $g->add_rule (new Rule ($integer_expression, array ($tokens_count)));
       break;

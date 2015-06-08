@@ -324,6 +324,13 @@ EOS;
     /*   } */
     /*   $result = '(' . implode(' < ', $res) . ')'; */
     /*   break; */
+    case 'integer-eq':
+      $res = array();
+      foreach ($formula->children() as $sub) {
+        $res[] = $this->translate_formula($sub, $places, $transitions, true);
+      }
+      $result = '(' . implode(' == ', $res) . ')';
+      break;
     case 'integer-le':
       $res = array();
       foreach ($formula->children() as $sub) {

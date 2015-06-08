@@ -12,7 +12,7 @@ class FormulasToSpec extends Base
   {
     $this
       ->setName('formula:to-spec')
-      ->setDescription('Convert formulas to .spec target')
+      ->setDescription('Convert formulas to spec')
       ->addOption('output', null,
         InputOption::VALUE_REQUIRED,
         'File name for formulas output', 'formulas')
@@ -192,6 +192,27 @@ EOS;
       foreach ($formula->children() as $sub)
         $res [] = $this->translate_formula ($sub, $pre, $padding, $variables);
       $result = "(" . implode("|", $res) . ")";
+      break;
+    case 'integer-eq':
+      $res = array();
+      foreach ($formula->children() as $sub)
+        $res[] = $this->translate_formula($sub, $pre, $padding, $variables);
+      if (count($res) != 2) {
+        $this->console_output->writeln("<warning>Error: no support for nary eq </warning>");
+        throw(new \Exception("unsupported subformula"));
+      }
+      if (is_numeric($res[0]) && !is_numeric($res[1])) {
+        $expression = "${res[1]}=${res[0]}";
+        if (! isset ($variables [$expression])) {
+          $count = count ($variables)+1;
+          $var   = "v" . str_pad ($count, $padding, "0", STR_PAD_LEFT);
+          $variables [$expression] = $var;
+        }
+        $result = $variables [$expression];
+      } else {
+        $this->console_output->writeln("<warning>Error: no support for less-than constraints place<=*</warning>");
+        throw (new \Exception ("unsupported subformula"));
+      }
       break;
     case 'integer-le':
       $res = array();
