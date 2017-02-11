@@ -5,7 +5,6 @@ use \Symfony\Component\Console\Input\ArrayInput;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\InputOption;
-use \MCC\Command\Base;
 use \MCC\Formula\EquivalentElements;
 
 class InstantiateFormulas extends Base
@@ -47,12 +46,9 @@ class InstantiateFormulas extends Base
     $this->input = $input->getOption('pattern-file');
     $this->output_name = $input->getOption('output');
     $output_path = null;
-    if ($this->sn_model)
-    {
+    if ($this->sn_model) {
       $output_path = dirname($this->sn_file);
-    }
-    else
-    {
+    } else {
       $output_path = dirname($this->pt_file);
     }
     $this->output = "${output_path}/{$input->getOption('output')}.xml";
@@ -73,8 +69,7 @@ class InstantiateFormulas extends Base
 
   protected function perform()
   {
-    if (file_exists($this->output))
-    {
+    if (file_exists($this->output)) {
       unlink($this->output);
     }
     $xml = $this->load_xml(file_get_contents($this->input));
@@ -82,8 +77,7 @@ class InstantiateFormulas extends Base
     $this->progress->setRedrawFrequency(max(1, $quantity / 100));
     $this->progress->start($this->console_output, $quantity);
     $id = 1;
-    foreach ($xml->property as $property)
-    {
+    foreach ($xml->property as $property) {
       $property->id = $this->model->net->attributes()['id'] .
         "-{$this->prefix}-" . $id;
       $this->instantiate_formula($property->formula->children()[0]);
@@ -92,8 +86,7 @@ class InstantiateFormulas extends Base
     }
     $this->progress->finish();
     file_put_contents($this->output, $this->save_xml($xml));
-    if ($this->chain)
-    {
+    if ($this->chain) {
       foreach (array(
         'formula:tag',
         'formula:unfold',
@@ -108,8 +101,7 @@ class InstantiateFormulas extends Base
             'parameter' => $this->parameter,
             '--output'  => $this->output_name,
           );
-        if ($c == 'formula:tag')
-        {
+        if ($c == 'formula:tag') {
           $arguments[] = '--no-warning';
         }
         $input = new ArrayInput($arguments);
@@ -120,8 +112,7 @@ class InstantiateFormulas extends Base
 
   private function instantiate_formula($formula)
   {
-    switch ((string) $formula->getName())
-    {
+    switch ((string) $formula->getName()) {
     case 'invariant':
     case 'impossibility':
     case 'possibility':
@@ -132,44 +123,46 @@ class InstantiateFormulas extends Base
     case 'negation':
       $sub = $formula->children()[0];
       $this->instantiate_formula($sub);
+
       return;
     case 'next':
-      foreach ($formula->children() as $child)
-      {
+      foreach ($formula->children() as $child) {
         if ($child->getName() != 'if-no-successor' &&
             $child->getName() != 'steps')
         {
           $this->instantiate_formula($child);
         }
       }
+
       return;
     case 'until':
       $before = $formula->before->children()[0];
       $reach  = $formula->reach->children()[0];
       $this->instantiate_formula($before);
       $this->instantiate_formula($reach);
+
       return;
     case 'deadlock':
     case 'true':
     case 'false':
       return;
     case 'integer-constant':
-      if ((string) $formula == "")
-      {
+      if ((string) $formula == "") {
         $formula = rand(0, 2);
       }
+
       return;
     case 'is-live':
     case 'is-fireable':
       $selected = array_rand($this->transitions, 1);
-      if (! is_array($selected))
-      {
+      if (! is_array($selected)) {
         $selected = array($selected);
       }
       foreach ($selected as $s) {
         $transition = $this->transitions[$s];
         $formula->addChild('transition', $transition->id);
       }
+
       return;
     case 'conjunction':
     case 'disjunction':
@@ -186,22 +179,22 @@ class InstantiateFormulas extends Base
     case 'integer-product':
     case 'integer-difference':
     case 'integer-division':
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $this->instantiate_formula($sub);
       }
+
       return;
     case 'place-bound':
     case 'tokens-count':
       $selected = array_rand($this->places, 1);
-      if (! is_array($selected))
-      {
+      if (! is_array($selected)) {
         $selected = array($selected);
       }
       foreach ($selected as $s) {
         $place = $this->places[$s];
         $formula->addChild('place', $place->id);
       }
+
       return;
     default:
       $this->console_output->writeln(

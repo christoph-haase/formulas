@@ -11,89 +11,100 @@ use \MCC\Data\Tool;
 use \External\ParseCSV;
 use \Symfony\Component\Console\Command\Command;
 use \Symfony\Component\Console\Output\OutputInterface;
-use \Symfony\Component\Console\Helper\ProgressHelper;
 
-class CSV2013 {
-
+class CSV2013
+{
   private $resultsdir;
   private $year;
 
-  public function __construct($year, $dir) {
+  public function __construct($year, $dir)
+  {
     $this -> year = $year;
     $this -> resultsdir = $dir;
   }
 
-  function tool($name) {
+  public function tool($name)
+  {
     global $entityManager;
     $result = $entityManager -> getRepository('\MCC\Data\Tool') -> findBy(array('name' => $name));
     if (count($result) == 0) {
       $result = new Tool($name);
       $entityManager -> flush();
-    } else if (count($result) == 1) {
+    } elseif (count($result) == 1) {
       $result = $result[0];
     } else {
       throw new Exception('');
     }
+
     return $result;
   }
 
-  function formalism($name) {
+  public function formalism($name)
+  {
     global $entityManager;
     $result = $entityManager -> getRepository('\MCC\Data\Formalism') -> findBy(array('acronym' => $name));
     if (count($result) == 0) {
       $result = new Formalism($name);
       $entityManager -> flush();
-    } else if (count($result) == 1) {
+    } elseif (count($result) == 1) {
       $result = $result[0];
     } else {
       throw new Exception('');
     }
+
     return $result;
   }
 
-  function model($name) {
+  public function model($name)
+  {
     global $entityManager;
     $result = $entityManager -> getRepository('\MCC\Data\Model') -> findBy(array('name' => $name));
     if (count($result) == 0) {
       $result = new Model($name);
       $entityManager -> flush();
-    } else if (count($result) == 1) {
+    } elseif (count($result) == 1) {
       $result = $result[0];
     } else {
       throw new Exception('');
     }
+
     return $result;
   }
 
-  function instance(Model $model, Formalism $formalism, $parameter) {
+  public function instance(Model $model, Formalism $formalism, $parameter)
+  {
     global $entityManager;
     $result = $entityManager -> getRepository('\MCC\Data\Instance') -> findBy(array('formalism' => $formalism, 'parameter' => $parameter));
     if (count($result) == 0) {
       $result = new Instance($model, $formalism, $parameter);
       $entityManager -> flush();
-    } else if (count($result) == 1) {
+    } elseif (count($result) == 1) {
       $result = $result[0];
     } else {
       throw new Exception('');
     }
+
     return $result;
   }
 
-  function contest($name) {
+  public function contest($name)
+  {
     global $entityManager;
     $result = $entityManager -> getRepository('\MCC\Data\Contest') -> findBy(array('edition' => $name));
     if (count($result) == 0) {
       $result = new Contest($name);
       $entityManager -> flush();
-    } else if (count($result) == 1) {
+    } elseif (count($result) == 1) {
       $result = $result[0];
     } else {
       throw new Exception('');
     }
+
     return $result;
   }
 
-  function call(Command $command, OutputInterface $output) {
+  public function call(Command $command, OutputInterface $output)
+  {
     global $entityManager;
     $contest = $this -> contest($this -> year);
     $resource = opendir($this -> resultsdir);

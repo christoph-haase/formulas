@@ -1,9 +1,6 @@
 <?php
 namespace MCC\Command;
 
-use \Symfony\Component\Console\Input\InputInterface;
-use \Symfony\Component\Console\Output\OutputInterface;
-use \MCC\Command\Base;
 use \MCC\Formula\EquivalentElements;
 
 class CheckUnfolding extends Base
@@ -25,19 +22,18 @@ class CheckUnfolding extends Base
   {
     $result = 0;
     $handle = fopen($file, "r");
-    while(! feof($handle))
-    {
+    while (! feof($handle)) {
       $line = fgets($handle);
       $result++;
     }
     fclose($handle);
+
     return $result - 1;
   }
 
   protected function perform()
   {
-    if ($this->sn_model && $this->pt_model)
-    {
+    if ($this->sn_model && $this->pt_model) {
       $dir = dirname($this->pt_file);
       $this->log = fopen("{$dir}/{$this->log_name}", 'w');
       $this->ep = new EquivalentElements($this->sn_model, $this->pt_model);
@@ -52,8 +48,7 @@ class CheckUnfolding extends Base
       $this->progress->finish();
       fclose($this->log);
       $count = $this->lines_of("{$dir}/{$this->log_name}");
-      if ($count > 0)
-      {
+      if ($count > 0) {
         $this->console_output->writeln(
           "<warning>  Problems have been detected, see {$dir}/{$this->log_name} for details.</warning>"
         );
@@ -65,18 +60,15 @@ class CheckUnfolding extends Base
   {
     // Check that all unfolded places belong to a colored one:
     $c = 0;
-    foreach ($this->ep->cplaces as $place)
-    {
+    foreach ($this->ep->cplaces as $place) {
       // Check that all colored places have at least one unfolding:
-      if (count($place->unfolded) == 0)
-      {
+      if (count($place->unfolded) == 0) {
         fwrite($this->log, "Place {$place->id} (named {$place->name}) has no unfolding.\n");
       }
       $c += count($place->unfolded);
       $this->progress->advance();
     }
-    if ($c != count($this->ep->uplaces))
-    {
+    if ($c != count($this->ep->uplaces)) {
       fwrite($this->log, "Unfolded model may use a bigger parameter.\n");
     }
   }
@@ -85,27 +77,23 @@ class CheckUnfolding extends Base
   {
     // Check that the maximum parameter is reached at least once:
     $maximum_reached = array();
-    foreach ($this->ep->cplaces as $place)
-    {
+    foreach ($this->ep->cplaces as $place) {
       $id = $place->id;
       $size = 1;
       $where = 1;
       $max = count($place->domain->values);
       $p = '';
-      foreach ($place->domain->values as $k => $v)
-      {
+      foreach ($place->domain->values as $k => $v) {
         $first = true;
         $last = end($v);
         $p .= '_((' . $last;
-        if ($where != $max)
-        {
+        if ($where != $max) {
           $size *= count($v);
           $p .= '_.*)|([^_]+';
         }
         $where++;
       }
-      for ($i = 0; $i < 2*count($place->domain->values); $i++)
-      {
+      for ($i = 0; $i < 2*count($place->domain->values); $i++) {
         $p .= ')';
       }
       $regex = "^{$place->name}{$p}$";
@@ -113,15 +101,11 @@ class CheckUnfolding extends Base
       // look at the regex!
       $maximum_reached[$id] = false;
       error_reporting(E_ERROR);
-      foreach ($this->ep->uplaces as $uplace)
-      {
-        if ((size < 1000) && preg_match('/' . $regex . '/u', $uplace->name))
-        {
+      foreach ($this->ep->uplaces as $uplace) {
+        if ((size < 1000) && preg_match('/' . $regex . '/u', $uplace->name)) {
           $maximum_reached[$id] = true;
           break;
-        }
-        else if (ereg($regex, $uplace->name))
-        {
+        } elseif (ereg($regex, $uplace->name)) {
           $maximum_reached[$id] = true;
           break;
         }
@@ -130,16 +114,13 @@ class CheckUnfolding extends Base
       $this->progress->advance();
     }
     $n = 0;
-    foreach ($maximum_reached as $i => $b)
-    {
-      if ($b)
-      {
+    foreach ($maximum_reached as $i => $b) {
+      if ($b) {
         $n++;
       }
     }
     $m = count($this->ep->cplaces);
-    if ($n < $m/2)
-    {
+    if ($n < $m/2) {
       fwrite($this->log, "Maximum parameter is reached for only {$n}/{$m} places.\n");
     }
   }
@@ -148,20 +129,16 @@ class CheckUnfolding extends Base
   {
     $c = 0;
     // Check that every transtion has at least one unfolding:
-    foreach ($this->ep->ctransitions as $transition)
-    {
-      if (count($transition->unfolded) == 0)
-      {
+    foreach ($this->ep->ctransitions as $transition) {
+      if (count($transition->unfolded) == 0) {
         fwrite($this->log, "Transition {$transition->id} (named {$transition->name}) has no unfolding.\n");
       }
       $c += count($transition->unfolded);
       $this->progress->advance();
     }
-    if ($c != count($this->ep->utransitions))
-    {
+    if ($c != count($this->ep->utransitions)) {
       fwrite($this->log, "Unfolded model may use a bigger parameter.\n");
     }
   }
 
 }
-

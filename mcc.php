@@ -37,6 +37,7 @@ $application->add(new \MCC\Command\UnfoldFormulas());
 $application->add(new \MCC\Command\InstantiateFormulas());
 $application->add(new \MCC\Command\FormulasCheck());
 $application->add(new \MCC\Command\FormulasToText());
+$application->add(new \MCC\Command\FormulasToSpec());
 $application->add(new \MCC\Command\FormulasToVIS());
 $application->add(new \MCC\Command\GenerateC());
 $application->add(new \MCC\Command\GenerateSpec());

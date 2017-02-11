@@ -2,17 +2,14 @@
 
 namespace MCC\Data;
 
-use \MCC\Data\Instance;
-use \MCC\Data\Tool;
-use \Doctrine\Common\Collections\Collection;
 use \Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @Entity
  * @Table(name="Examination")
  */
-class Examination {
-
+class Examination
+{
   /**
    * @Id
    * @GeneratedValue
@@ -106,7 +103,8 @@ class Examination {
    */
   protected $contest = null;
 
-  public function __construct(Tool $tool, Instance $instance) {
+  public function __construct(Tool $tool, Instance $instance)
+  {
     global $entityManager;
     $entityManager -> persist($this);
     $this -> tool = $tool;
@@ -114,7 +112,8 @@ class Examination {
     $this -> result = new ArrayCollection();
   }
 
-  public function __toString() {
+  public function __toString()
+  {
     $tags = '';
     if ($this -> isStateSpace) {
       $tags = $tags . ' state-space';
@@ -143,87 +142,111 @@ class Examination {
     if ($this -> hasPlaceComparison) {
       $tags = $tags . ' place';
     }
+
     return "{$this->tool} on {$this->instance} (tags:{$tags}): {$this->result} [{$this->time}s/{$this->cpu}s/{$this->memory}%]";
   }
 
-  public function setStateSpace() {
+  public function setStateSpace()
+  {
     $this -> isStateSpace = true;
     $this -> isReachability = false;
     $this -> isCTL = false;
     $this -> isLTL = false;
+
     return $this;
   }
 
-  public function setReachability() {
+  public function setReachability()
+  {
     $this -> isStateSpace = false;
     $this -> isReachability = true;
     $this -> isCTL = false;
     $this -> isLTL = false;
+
     return $this;
   }
 
-  public function setCTL() {
+  public function setCTL()
+  {
     $this -> isStateSpace = false;
     $this -> isReachability = false;
     $this -> isCTL = true;
     $this -> isLTL = false;
+
     return $this;
   }
 
-  public function setLTL() {
+  public function setLTL()
+  {
     $this -> isStateSpace = false;
     $this -> isReachability = false;
     $this -> isCTL = false;
     $this -> isLTL = true;
+
     return $this;
   }
 
-  public function setDeadlock() {
+  public function setDeadlock()
+  {
     $this -> hasDeadlock = true;
+
     return $this;
   }
 
-  public function setFireability() {
+  public function setFireability()
+  {
     $this -> hasFireability = true;
+
     return $this;
   }
 
-  public function setCardinalityComparison() {
+  public function setCardinalityComparison()
+  {
     $this -> hasCardinalityComparison = true;
+
     return $this;
   }
 
-  public function setMarkingComparison() {
+  public function setMarkingComparison()
+  {
     $this -> hasMarkingComparison = true;
+
     return $this;
   }
 
-  public function setPlaceComparison() {
+  public function setPlaceComparison()
+  {
     $this -> hasPlaceComparison = true;
+
     return $this;
   }
 
-  public function setResult($value) {
+  public function setResult($value)
+  {
     $this -> result = $value;
+
     return $this;
   }
 
-  public function setContest($contest) {
+  public function setContest($contest)
+  {
     $this -> contest = $contest;
+
     return $this;
   }
 
-  public function result() {
+  public function result()
+  {
     if ($this -> isStateSpace) {
       return floatval($this -> result);
-    } else if ($this -> isReachability || $this -> isCTL || $this -> isLTL) {
+    } elseif ($this -> isReachability || $this -> isCTL || $this -> isLTL) {
       $res = array();
       for ($i = 0; $i < strlen($this -> result); $i++) {
         if ($this -> result[$i] == 'T') {
           $res[] = true;
-        } else if ($this -> result[$i] == 'F') {
+        } elseif ($this -> result[$i] == 'F') {
           $res[] = false;
-        } else if ($this -> result[$i] == '-') {
+        } elseif ($this -> result[$i] == '-') {
           $res[] = null;
         } else {
           throw new Exception("Character representing result {$i} of examination {$this} is not 'T', 'F' or '-'.");
@@ -232,23 +255,30 @@ class Examination {
     }
   }
 
-  public function setTime($value) {
+  public function setTime($value)
+  {
     $this -> time = floatval($value);
+
     return $this;
   }
 
-  public function setCPU($value) {
+  public function setCPU($value)
+  {
     $this -> cpu = floatval($value);
+
     return $this;
   }
 
-  public function setMemory($value) {
+  public function setMemory($value)
+  {
     $value = str_replace('%', '', $value);
     $this -> memory = floatval($value) * 100;
+
     return $this;
   }
 
-  public function __get($property) {
+  public function __get($property)
+  {
     if (property_exists($this, $property)) {
       return $this -> $property;
     }

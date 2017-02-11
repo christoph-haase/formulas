@@ -4,8 +4,6 @@ namespace MCC\Command;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\InputOption;
-use \MCC\Command\Base;
-use \MCC\Formula\EquivalentElements;
 
 class FormulasToVIS extends Base
 {
@@ -34,8 +32,7 @@ class FormulasToVIS extends Base
 
   protected function perform()
   {
-    if ($this->pt_model != null)
-    {
+    if ($this->pt_model != null) {
       $this->convert(
         $this->pt_input,
         $this->pt_output
@@ -43,15 +40,15 @@ class FormulasToVIS extends Base
     }
   }
 
-  private function convert ($input, $output)
+  private function convert($input, $output)
   {
     if (file_exists($output))
       unlink($output);
-    if (! file_exists($input))
-    {
+    if (! file_exists($input)) {
       $this->console_output->writeln(
         "<error>Formula file {$input} not found.</error>"
       );
+
       return;
     }
     $xml = $this->load_xml(file_get_contents($input));
@@ -60,8 +57,7 @@ class FormulasToVIS extends Base
     $this->progress->start($this->console_output, $quantity);
     $result = array();
     $errors = array();
-    foreach ($xml->property as $property)
-    {
+    foreach ($xml->property as $property) {
       try {
         $result[] = $this->translate_property($property);
       } catch (\Exception $e) {
@@ -91,14 +87,14 @@ class FormulasToVIS extends Base
       true
     );
     $result .= ";\n";
+
     return $result;
   }
 
   private function translate_formula($formula, $in_operator = null)
   {
     $result = null;
-    switch ((string) $formula->getName())
-    {
+    switch ((string) $formula->getName()) {
     case 'invariant':
       $sub = $formula->children()[0];
       $result = 'AG (' .
@@ -134,8 +130,7 @@ class FormulasToVIS extends Base
       }
       $steps = (string) $formula->steps;
       $sub = null;
-      foreach ($formula->children() as $child)
-      {
+      foreach ($formula->children() as $child) {
         if ($child->getName() != 'if-no-successor' &&
             $child->getName() != 'steps')
         {
@@ -176,11 +171,9 @@ class FormulasToVIS extends Base
       $reach  = $formula->reach->children()[0];
       $strength = (string) $formula->strength;
       $operator = null;
-      if ($strength == 'weak')
-      {
+      if ($strength == 'weak') {
         throw new \Exception("W");
-      } else if ($strength == 'strong')
-      {
+      } elseif ($strength == 'strong') {
         $operator = 'U';
       }
       $result = "((" .
@@ -212,48 +205,42 @@ class FormulasToVIS extends Base
       break;
     case 'conjunction':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub);
       }
       $result = '(' . implode(' * ', $res) . ')';
       break;
     case 'disjunction':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub);
       }
       $result = '(' . implode(' + ', $res) . ')';
       break;
     case 'exclusive-disjunction':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub);
       }
       $result = '(' . implode(' ^ ', $res) . ')';
       break;
     case 'implication':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub);
       }
       $result = '(' . implode(' -> ', $res) . ')';
       break;
     case 'equivalence':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub);
       }
       $result = '(' . implode(' <-> ', $res) . ')';
       break;
     case 'integer-eq':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub);
       }
       $result = '(' . implode(' = ', $res) . ')';
@@ -261,8 +248,7 @@ class FormulasToVIS extends Base
       break;
     case 'integer-ne':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub);
       }
       $result = '! (' . implode(' = ', $res) . ')';
@@ -311,6 +297,7 @@ class FormulasToVIS extends Base
         "<warning>Error: unknown node {$formula->getName()}</warning>"
       );
     }
+
     return $result;
   }
 

@@ -1,10 +1,6 @@
 <?php
 namespace MCC\Formula;
 
-use \MCC\Formula\Domain;
-use \MCC\Formula\Place;
-use \MCC\Formula\Transition;
-
 class EquivalentElements
 {
   public $cmodel;
@@ -20,13 +16,10 @@ class EquivalentElements
   {
     $this->cmodel = $cmodel;
     $this->umodel = $umodel;
-    if ($this->cmodel)
-    {
+    if ($this->cmodel) {
       $this->sn_places();
       $this->sn_transitions();
-    }
-    else
-    {
+    } else {
       $this->pt_places();
       $this->pt_transitions();
     }
@@ -35,37 +28,29 @@ class EquivalentElements
   private function sn_places()
   {
     // Load colored domains:
-    foreach ($this->cmodel->net->declaration->structure->declarations->namedsort as $sort)
-    {
+    foreach ($this->cmodel->net->declaration->structure->declarations->namedsort as $sort) {
       $id = (string) $sort->attributes()['id'];
       $name = (string) $sort->attributes()['name'];
       $domain = new Domain();
       $domain->id = $id;
       $domain->name = $name;
-      if ($sort->cyclicenumeration)
-      {
+      if ($sort->cyclicenumeration) {
         $domain->values[$id] = array();
-        foreach ($sort->cyclicenumeration->feconstant as $value)
-        {
+        foreach ($sort->cyclicenumeration->feconstant as $value) {
           $vid = (string) $value->attributes()['id'];
           $vname = (string) $value->attributes()['name'];
           $domain->values[$id][$vid] = $vname;
         }
-      }
-      else if ($sort->finiteenumeration)
-      {
+      } elseif ($sort->finiteenumeration) {
         $domain->values[$id] = array();
-        foreach ($sort->finiteenumeration->feconstant as $value)
-        {
+        foreach ($sort->finiteenumeration->feconstant as $value) {
           $vid = (string) $value->attributes()['id'];
           $vname = (string) $value->attributes()['name'];
           $domain->values[$id][$vid] = $vname;
         }
-      } else if ($sort->productsort)
-      {
+      } elseif ($sort->productsort) {
         $i = 0;
-        foreach ($sort->productsort->usersort as $sub)
-        {
+        foreach ($sort->productsort->usersort as $sub) {
           $subname = (string) $sub->attributes()['declaration'];
           $domain->values[$i] = $subname;
           $i += 1;
@@ -74,19 +59,15 @@ class EquivalentElements
       $this->domains[$id] = $domain;
     }
     // When all domains are declared, fill the products:
-    foreach ($this->domains as $domain)
-    {
-      foreach ($domain->values as $k => $v)
-      {
-        if (gettype($v) == 'string')
-        {
+    foreach ($this->domains as $domain) {
+      foreach ($domain->values as $k => $v) {
+        if (gettype($v) == 'string') {
           $domain->values[$k] = $this->domains[$v]->values[$v];
         }
       }
     }
     // Load colored domains and places:
-    foreach ($this->cmodel->net->page->place as $place)
-    {
+    foreach ($this->cmodel->net->page->place as $place) {
       $id = (string) $place->attributes()['id'];
       $name = (string) $place->name->text;
       $domain = (string) $place->type->structure->usersort->attributes()['declaration'];
@@ -96,11 +77,9 @@ class EquivalentElements
       $cplace->domain = $this->domains[$domain];
       $this->cplaces[$id] = $cplace;
     }
-    if ($this->umodel)
-    {
+    if ($this->umodel) {
       // Load unfolded places:
-      foreach ($this->umodel->net->page->place as $place)
-      {
+      foreach ($this->umodel->net->page->place as $place) {
         $id = (string) $place->attributes()['id'];
         $name = (string) $place->name->text;
         $uplace = new Place();
@@ -109,29 +88,21 @@ class EquivalentElements
         $this->uplaces[$id] = $uplace;
       }
       // For each colored place, build regex that recognize its unfoldings:
-      foreach ($this->cplaces as $place)
-      {
+      foreach ($this->cplaces as $place) {
         $size = 1;
         $p = '';
-        foreach ($place->domain->values as $k => $v)
-        {
+        foreach ($place->domain->values as $k => $v) {
           $size *= count($v);
           $first = true;
           $p .= '_(';
           // Warning: here we do an approximation to save a lot of time:
-          if ((count($v) > 100) && (is_numeric(reset($v))))
-          {
+          if ((count($v) > 100) && (is_numeric(reset($v)))) {
             $p .= '[0-9]+';
-          }
-          else
-          {
-            foreach ($v as $vid => $vname)
-            {
-              if ($first)
-              {
+          } else {
+            foreach ($v as $vid => $vname) {
+              if ($first) {
                 $first = false;
-              } else
-              {
+              } else {
                 $p .= '|';
               }
                 $p .= $vname;
@@ -141,27 +112,22 @@ class EquivalentElements
         }
         $regex = "^{$place->name}{$p}$";
         error_reporting(E_ERROR);
-        foreach ($this->uplaces as $uplace)
-        {
-          if (($size < 1000) && preg_match('/' . $regex . '/u', $uplace->name))
-          {
+        foreach ($this->uplaces as $uplace) {
+          if (($size < 1000) && preg_match('/' . $regex . '/u', $uplace->name)) {
             $place->unfolded[$uplace->id] = $uplace;
-          }
-          else if (ereg($regex, $uplace->name))
-          {
+          } elseif (ereg($regex, $uplace->name)) {
             $place->unfolded[$uplace->id] = $uplace;
           }
         }
         error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
       }
-    } 
+    }
   }
 
   private function sn_transitions()
   {
     // Load colored transitions:
-    foreach ($this->cmodel->net->page->transition as $transition)
-    {
+    foreach ($this->cmodel->net->page->transition as $transition) {
       $id = (string) $transition->attributes()['id'];
       $name = (string) $transition->name->text;
       $ctransition = new Transition();
@@ -169,11 +135,9 @@ class EquivalentElements
       $ctransition->name = $name;
       $this->ctransitions[$id] = $ctransition;
     }
-    if ($this->umodel)
-    {
+    if ($this->umodel) {
       // Load unfolded transitions:
-      foreach ($this->umodel->net->page->transition as $transition)
-      {
+      foreach ($this->umodel->net->page->transition as $transition) {
         $id = (string) $transition->attributes()['id'];
         $name = (string) $transition->name->text;
         $utransition = new Transition();
@@ -182,35 +146,25 @@ class EquivalentElements
         $this->utransitions[$id] = $utransition;
       }
       // For each colored transition, build regex that recognize its unfoldings:
-      if ($this->utransitions)
-      {
-        foreach ($this->ctransitions as $transition)
-        {
+      if ($this->utransitions) {
+        foreach ($this->ctransitions as $transition) {
           $avoids = array ();
-          foreach ($this->ctransitions as $other)
-          {
-            if (($transition != $other) && (strpos($other->name, $transition->name) !== false))
-            { // transition name is a prefix of other name
+          foreach ($this->ctransitions as $other) {
+            if (($transition != $other) && (strpos($other->name, $transition->name) !== false)) { // transition name is a prefix of other name
               $avoids[$other->id] = $other->name;
             }
           }
           $regex = "^{$transition->name}(_[^_]+)*$";
-          foreach ($this->utransitions as $utransition)
-          {
+          foreach ($this->utransitions as $utransition) {
             $check = true;
-            foreach ($avoids as $avoid)
-            {
+            foreach ($avoids as $avoid) {
               $check = $check && (strpos($utransition->name, $avoid) === false);
             }
-            if ($check)
-            {
+            if ($check) {
               error_reporting(E_ERROR);
-              if ((size < 1000) && preg_match('/' . $regex . '/u', $utransition->name))
-              {
+              if ((size < 1000) && preg_match('/' . $regex . '/u', $utransition->name)) {
                 $transition->unfolded[$utransition->id] = $utransition;
-              }
-              else if (ereg($regex, $utransition->name))
-              {
+              } elseif (ereg($regex, $utransition->name)) {
                 $transition->unfolded[$utransition->id] = $utransition;
               }
               error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
@@ -224,8 +178,7 @@ class EquivalentElements
   private function pt_places()
   {
     // Load colored transitions:
-    foreach ($this->umodel->net->page->place as $place)
-    {
+    foreach ($this->umodel->net->page->place as $place) {
       $id = (string) $place->attributes()['id'];
       $name = (string) $place->name->text;
       $uplace = new Place();
@@ -238,8 +191,7 @@ class EquivalentElements
   private function pt_transitions()
   {
     // Load colored transitions:
-    foreach ($this->umodel->net->page->transition as $transition)
-    {
+    foreach ($this->umodel->net->page->transition as $transition) {
       $id = (string) $transition->attributes()['id'];
       $name = (string) $transition->name->text;
       $utransition = new Transition();

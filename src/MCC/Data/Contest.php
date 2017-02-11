@@ -9,8 +9,8 @@ use \Doctrine\Common\Collections\ArrayCollection;
  * @Entity
  * @Table(name="Contest")
  */
-class Contest {
-
+class Contest
+{
   /**
    * @Id
    * @GeneratedValue
@@ -49,7 +49,8 @@ class Contest {
    */
   protected $examinations;
 
-  public function __construct($edition) {
+  public function __construct($edition)
+  {
     global $entityManager;
     $entityManager -> persist($this);
     $this -> edition = $edition;
@@ -60,27 +61,31 @@ class Contest {
     $this -> examinations = new ArrayCollection();
   }
 
-  public function __toString() {
+  public function __toString()
+  {
     return "mcc {$this->edition}";
   }
 
-  public function add($value) {
+  public function add($value)
+  {
     if (get_class($value) == "MCC\Data\Examination") {
       $this -> examinations -> add($value);
       $value -> setContest($this);
-    } else if (get_class($value) == "MCC\Data\Instance") {
+    } elseif (get_class($value) == "MCC\Data\Instance") {
       $this -> instances -> add($value);
-    } else if (get_class($value) == "MCC\Data\Model") {
+    } elseif (get_class($value) == "MCC\Data\Model") {
       $this -> models -> add($value);
-    } else if (get_class($value) == "MCC\Data\Tool") {
+    } elseif (get_class($value) == "MCC\Data\Tool") {
       $this -> tools -> add($value);
     } else {
       throw new Exception("");
     }
+
     return $this;
   }
 
-  public function __get($property) {
+  public function __get($property)
+  {
     if (property_exists($this, $property)) {
       return $this -> $property;
     }

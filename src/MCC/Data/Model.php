@@ -9,8 +9,8 @@ use \Doctrine\Common\Collections\ArrayCollection;
  * @Entity
  * @Table(name="Model")
  */
-class Model {
-
+class Model
+{
   /**
    * @Id
    * @GeneratedValue
@@ -37,28 +37,33 @@ class Model {
    */
   protected $instances;
 
-  public function __construct($name) {
+  public function __construct($name)
+  {
     global $entityManager;
     $entityManager -> persist($this);
     $this -> name = $name;
     $this -> instances = new ArrayCollection();
   }
 
-  public function __toString() {
+  public function __toString()
+  {
     return "{$this->name}";
   }
 
-  public function setColor($color) {
+  public function setColor($color)
+  {
     $this -> color = $color;
   }
 
-  public function __get($property) {
+  public function __get($property)
+  {
     if (property_exists($this, $property)) {
       return $this -> $property;
     }
   }
 
-  public function instance($parameter, Formalism $formalism) {
+  public function instance($parameter, Formalism $formalism)
+  {
     foreach ($instances as $instance) {
       if (($instance -> parameter == $parameter) && ($instance -> formalism == $formalism)) {
         return $instance;

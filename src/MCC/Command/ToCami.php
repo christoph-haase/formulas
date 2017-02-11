@@ -4,7 +4,6 @@ namespace MCC\Command;
 use \Symfony\Component\Console\Input\InputOption;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
-use \MCC\Command\Base;
 
 class ToCami extends Base
 {
@@ -39,14 +38,12 @@ class ToCami extends Base
     $cami_id = 1;
     $equivalence = array();
     $file = fopen(preg_replace('/.pnml$/', '.cami', $this->pt_file), 'w');
-    if ($this->wrap)
-    {
+    if ($this->wrap) {
       fwrite($file, "DB()\n");
     }
     fwrite($file, "CN(3:net,${cami_id})\n");
     $cami_id++;
-    foreach ($model->net->page->place as $place)
-    {
+    foreach ($model->net->page->place as $place) {
       $id      = (string) $place->attributes()['id'];
       $name    = (string) $place->name->text;
       $marking = (string) $place->initialMarking->text;
@@ -62,8 +59,7 @@ class ToCami extends Base
       $cami_id++;
       $this->progress->advance();
     }
-    foreach ($model->net->page->transition as $transition)
-    {
+    foreach ($model->net->page->transition as $transition) {
       $id   = (string) $transition->attributes()['id'];
       $name = (string) $transition->name->text;
       $id_length = strlen($id);
@@ -73,8 +69,7 @@ class ToCami extends Base
       $cami_id++;
       $this->progress->advance();
     }
-    foreach ($model->net->page->arc as $arc)
-    {
+    foreach ($model->net->page->arc as $arc) {
       $id        = (string) $arc->attributes()['id'];
       $source    = (string) $arc->attributes()['source'];
       $target    = (string) $arc->attributes()['target'];
@@ -91,13 +86,11 @@ class ToCami extends Base
       $cami_id++;
       $this->progress->advance();
     }
-    if ($this->wrap)
-    {
+    if ($this->wrap) {
       fwrite($file, "FB()\n");
     }
     fclose($file);
     $this->progress->finish();
   }
 
-
-} 
+}

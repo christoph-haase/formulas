@@ -4,7 +4,6 @@ namespace MCC\Command;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\InputOption;
-use \MCC\Command\Base;
 
 class FormulasAddNamespace extends Base
 {
@@ -30,25 +29,23 @@ class FormulasAddNamespace extends Base
 
   protected function perform()
   {
-    if ($this->sn_model != null)
-    {
+    if ($this->sn_model != null) {
       $file = dirname($this->sn_file) . '/' . $this->output;
       $this->convert($file);
     }
-    if ($this->pt_model != null)
-    {
+    if ($this->pt_model != null) {
       $file = dirname($this->pt_file) . '/' . $this->output;
       $this->convert($file);
     }
   }
 
-  private function convert ($file)
+  private function convert($file)
   {
-    if (! file_exists($file))
-    {
+    if (! file_exists($file)) {
       $this->console_output->writeln(
           "  <warning>Formula file '{$file}' does not exist.</warning>"
         );
+
       return;
     }
     $xml = $this->load_xml(file_get_contents($file));

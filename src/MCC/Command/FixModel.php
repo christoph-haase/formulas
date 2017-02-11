@@ -4,7 +4,6 @@ namespace MCC\Command;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\InputOption;
-use \MCC\Command\Base;
 
 class FixModel extends Base
 {
@@ -30,15 +29,13 @@ class FixModel extends Base
   protected function perform()
   {
     $quantity = 0;
-    if ($this->sn_model)
-    {
+    if ($this->sn_model) {
       $quantity += 2 +
         count($this->sn_model->net->page->place) +
         count($this->sn_model->net->page->transition) +
         count($this->sn_model->net->page->arc);
     }
-    if ($this->pt_model)
-    {
+    if ($this->pt_model) {
       $quantity += 2 +
         count($this->pt_model->net->page->place) +
         count($this->pt_model->net->page->transition) +
@@ -46,21 +43,17 @@ class FixModel extends Base
     }
     $this->progress->setRedrawFrequency(max(1, $quantity / 100));
     $this->progress->start($this->console_output, $quantity);
-    if ($this->sn_model)
-    {
+    if ($this->sn_model) {
       $this->perform_for($this->sn_file, $this->sn_model);
     }
-    if ($this->pt_model)
-    {
+    if ($this->pt_model) {
       $this->perform_for($this->pt_file, $this->pt_model);
     }
     $this->progress->finish();
-    if ($this->sn_model)
-    {
+    if ($this->sn_model) {
       $this->warn_for($this->sn_file, 'Colored');
     }
-    if ($this->pt_model)
-    {
+    if ($this->pt_model) {
       $this->warn_for($this->pt_file, 'P/T');
     }
   }
@@ -77,12 +70,12 @@ class FixModel extends Base
   {
     $result = 0;
     $handle = fopen($file, "r");
-    while(! feof($handle))
-    {
+    while (! feof($handle)) {
       $line = fgets($handle);
       $result++;
     }
     fclose($handle);
+
     return $result - 1;
   }
 
@@ -90,16 +83,12 @@ class FixModel extends Base
   {
     $dir = dirname($file);
     $count = $this->lines_of("{$dir}/{$this->log_name}");
-    if ($count > 1)
-    {
-      if ($this->dryrun)
-      {
+    if ($count > 1) {
+      if ($this->dryrun) {
         $this->console_output->writeln(
           "<warning>  {$special}: {$count} problems should be fixed.</warning>"
         );
-      }
-      else
-      {
+      } else {
         $this->console_output->writeln(
           "<warning>  {$special}: {$count} problems have been fixed.</warning>"
         );
@@ -113,16 +102,13 @@ class FixModel extends Base
     $instancename = basename(dirname(realpath($file)));
     $id = (string) $model->net->attributes()['id'];
     // Fix model id and name:
-    if ($instancename != $id)
-    {
+    if ($instancename != $id) {
       $namematches = array();
-      if (preg_match('/^(.*)-(COL|PT)-(.*)$/u', $instancename, $namematches))
-      {
+      if (preg_match('/^(.*)-(COL|PT)-(.*)$/u', $instancename, $namematches)) {
         $name = $namematches[1];
         $parameter = $namematches[3];
         $type = NULL;
-        switch ($model->net->attributes()['type'])
-        {
+        switch ($model->net->attributes()['type']) {
         case 'http://www.pnml.org/version-2009/grammar/ptnet':
           $type = 'PT';
           break;
@@ -132,23 +118,18 @@ class FixModel extends Base
         }
         fwrite($this->log, "Fixing id from {$id} to {$name}-{$type}-{$parameter}\n");
         $model->net->attributes()['id'] = "{$name}-{$type}-{$parameter}";
-      }
-      else
-      {
+      } else {
         fwrite($this->log, "{$instancename} does not respect the pattern NAME-(COL|PT)-PARAMETER.\n");
         exit(1);
       }
     }
     $this->progress->advance();
     $name = $model->net->name;
-    if ($name == NULL)
-    {
+    if ($name == NULL) {
       fwrite($this->log, "Fixing name to {$model->net->attributes()['id']}.\n");
       $model->net->addChild('name');
       $model->net->name->addChild('text', "{$model->net->attributes()['id']}");
-    }
-    else if ((string) $name->text != $model->net->attributes()['id'])
-    {
+    } elseif ((string) $name->text != $model->net->attributes()['id']) {
       fwrite($this->log, "Fixing name from {$name->text} to {$model->net->attributes()['id']}.\n");
       $model->net->name->text = "{$model->net->attributes()['id']}";
     }
@@ -156,30 +137,25 @@ class FixModel extends Base
     //
     $replacements = array();
     // Now, fix place ids and names;
-    foreach ($model->net->page->place as $place)
-    {
+    foreach ($model->net->page->place as $place) {
       $id = (string) $place->attributes()['id'];
       $name = (string) $place->name->text;
-      if (($id == NULL) && ($name == NULL))
-      {
+      if (($id == NULL) && ($name == NULL)) {
         fwrite($this->log, "Missing both place id and name.\n");
         exit(1);
       }
-      if ($id == NULL)
-      {
+      if ($id == NULL) {
         fwrite($this->log, "Fixing missing place id for ${name}.\n");
         $id = $this->identifier_of($name);
         $place->addAttribute('id', $id);
       }
-      if ($name == NULL)
-      {
+      if ($name == NULL) {
         fwrite($this->log, "Fixing missing place name for ${id}\n");
         $place->addChild('name');
         $name = $place->attributes()['id'];
         $place->name->addChild('text', $name);
       }
-      if (levenshtein($id, $name) >= min(strlen($id), strlen($name))/2)
-      {
+      if (levenshtein($id, $name) >= min(strlen($id), strlen($name))/2) {
         $new = $this->identifier_of($name);
         fwrite($this->log, "Fixing ugly place id for ${id} to ${new}.\n");
         $replacements[$id] = $new;
@@ -188,30 +164,25 @@ class FixModel extends Base
       $this->progress->advance();
     }
     // The same for transitions:
-    foreach ($model->net->page->transition as $transition)
-    {
+    foreach ($model->net->page->transition as $transition) {
       $id = (string) $transition->attributes()['id'];
       $name = (string) $transition->name->text;
-      if (($id == NULL) && ($name == NULL))
-      {
+      if (($id == NULL) && ($name == NULL)) {
         fwrite($this->log, "Missing both transition id and name.\n");
         exit(1);
       }
-      if ($id == NULL)
-      {
+      if ($id == NULL) {
         fwrite($this->log, "Fixing missing transition id for ${name}\n");
         $id = $this->identifier_of($name);
         $transition->addAttribute('id', $id);
       }
-      if ($name == NULL)
-      {
+      if ($name == NULL) {
         fwrite($this->log, "Fixing missing transition name for ${id}.\n");
         $transition->addChild('name');
         $name = $transition->attributes()['id'];
         $transition->name->addChild('text', $name);
       }
-      if (levenshtein($id, $name) > min(strlen($id), strlen($name))/2)
-      {
+      if (levenshtein($id, $name) > min(strlen($id), strlen($name))/2) {
         $new = $this->identifier_of($name);
         fwrite($this->log, "Fixing ugly transition id for ${id} to ${new}.\n");
         $replacements[$id] = $new;
@@ -220,34 +191,27 @@ class FixModel extends Base
       $this->progress->advance();
     }
     // Update arcs:
-    if (count($replacements) != 0)
-    {
-      foreach ($model->net->page->arc as $arc)
-      {
+    if (count($replacements) != 0) {
+      foreach ($model->net->page->arc as $arc) {
         $id = (string) $arc->attributes()['id'];
         $source = (string) $arc->attributes()['source'];
-        if (array_key_exists($source, $replacements))
-        {
+        if (array_key_exists($source, $replacements)) {
           $r = $replacements[$source];
           fwrite($this->log, "Fixing arc ${id} source from ${source} to ${r}.\n");
           $arc->attributes()['source'] = $r;
         }
         $target = (string) $arc->attributes()['target'];
-        if (array_key_exists($target, $replacements))
-        {
+        if (array_key_exists($target, $replacements)) {
           $r = $replacements[$target];
           fwrite($this->log, "Fixing arc ${id} target from ${target} to ${r}.\n");
           $arc->attributes()['target'] = $r;
         }
         $this->progress->advance();
       }
-    }
-    else
-    {
+    } else {
       $this->progress->advance(count($model->net->page->arc));
     }
-    if (!$this->dryrun)
-    {
+    if (!$this->dryrun) {
       $model->asXml($file);
     }
   }

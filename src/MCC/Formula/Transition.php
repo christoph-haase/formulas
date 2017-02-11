@@ -7,5 +7,3 @@ class Transition
   public $name;
   public $unfolded = array();
 }
-
-

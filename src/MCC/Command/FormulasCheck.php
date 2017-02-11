@@ -4,7 +4,6 @@ namespace MCC\Command;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\InputOption;
-use \MCC\Command\Base;
 use \MCC\Formula\EquivalentElements;
 use \MCC\Formula\CheckFormula;
 
@@ -44,13 +43,12 @@ class FormulasCheck extends Base
     $this->pt_smt = "${pt_path}/test.smt";
     $this->checker = new CheckFormula();
   }
-  
+
   protected function perform()
   {
 //  $this->console_output->writeln("perform " . $this->sn_smt . " " . $this->pt_smt);
     $this->ep = new EquivalentElements($this->sn_model, $this->pt_model);
-    if ($this->sn_model != null)
-    {
+    if ($this->sn_model != null) {
       $this->check
         (
         $this->sn_input,
@@ -60,8 +58,7 @@ class FormulasCheck extends Base
         $this->ep->ctransitions
       );
     }
-    if ($this->pt_model != null)
-    {
+    if ($this->pt_model != null) {
       $this->check(
         $this->pt_input,
         $this->pt_output,
@@ -72,14 +69,14 @@ class FormulasCheck extends Base
     }
   }
 
-  protected function check ($input, $output, $smt, $places, $transitions)
+  protected function check($input, $output, $smt, $places, $transitions)
   {
 //  $this->console_output->writeln("check " . $smt);
-    if (! file_exists($input))
-    {
+    if (! file_exists($input)) {
       $this->console_output->writeln(
         "<error>Formula file {$input} not found.</error>"
       );
+
       return;
     }
     $xml = $this->load_xml(file_get_contents($input));
@@ -88,19 +85,16 @@ class FormulasCheck extends Base
     $this->progress->start($this->console_output, $quantity);
     $n = 0;
     $to_suppress = array();
-    foreach ($xml->property as $property)
-    {
+    foreach ($xml->property as $property) {
       $result = array(true, array(), "");
-      $result = $this->checker->perform_check($property->formula->children()[0], $places, 
+      $result = $this->checker->perform_check($property->formula->children()[0], $places,
                                      $transitions, $smt);
-      
-      if ($result[2] != "")
-      {
+
+      if ($result[2] != "") {
         $result[0] = $result[0] && $this->checker->call_smt($result, $smt);
       }
-      
-      if (!$result[0])
-      {
+
+      if (!$result[0]) {
         $to_suppress[] = $n;
 //        $this->console_output->writeln("On supprime : " . $n);
 //        unset($xml->children()[$n]);
@@ -109,8 +103,7 @@ class FormulasCheck extends Base
       $this->progress->advance();
     }
     $n = 0;
-    foreach ($to_suppress as $i)
-    {
+    foreach ($to_suppress as $i) {
       unset($xml->children()[$i - $n]);
       $n++;
     }
@@ -120,5 +113,4 @@ class FormulasCheck extends Base
     file_put_contents($output, $this->save_xml($xml));
   }
 
-  
 }

@@ -1,8 +1,6 @@
 <?php
 namespace MCC\Formula;
 
-use \MCC\Formula\Domain;
-
 class Place
 {
   public $id;
@@ -10,5 +8,3 @@ class Place
   public $domain = NULL;
   public $unfolded = array();
 }
-
-

@@ -4,8 +4,6 @@ namespace MCC\Command;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\InputOption;
-use \MCC\Command\Base;
-use \MCC\Formula\EquivalentElements;
 
 class TagFormulas extends Base
 {
@@ -36,36 +34,32 @@ class TagFormulas extends Base
 
   protected function perform()
   {
-    if ($this->sn_model != null)
-    {
+    if ($this->sn_model != null) {
       $file = dirname($this->sn_file) . '/' . $this->output;
       $this->convert($file);
     }
-    if ($this->pt_model != null)
-    {
+    if ($this->pt_model != null) {
       $file = dirname($this->pt_file) . '/' . $this->output;
       $this->convert($file);
     }
   }
 
-  private function convert ($file)
+  private function convert($file)
   {
-    if (! file_exists($file))
-    {
-      if ($this->warn)
-      {
+    if (! file_exists($file)) {
+      if ($this->warn) {
         $this->console_output->writeln(
             "  <warning>Formula file '{$file}' does not exist.</warning>"
           );
       }
+
       return;
     }
     $xml = $this->load_xml(file_get_contents($file));
     $quantity = count($xml->children());
     $this->progress->setRedrawFrequency(max(1, $quantity / 100));
     $this->progress->start($this->console_output, $quantity);
-    foreach ($xml->property as $property)
-    {
+    foreach ($xml->property as $property) {
       $this->tag_property($property);
       $this->progress->advance();
     }
@@ -73,7 +67,7 @@ class TagFormulas extends Base
     file_put_contents($file, $this->save_xml($xml));
   }
 
-  private function boolean_of ($x)
+  private function boolean_of($x)
   {
     if ($x)
       return "true";
@@ -103,8 +97,7 @@ class TagFormulas extends Base
 
   private function is_structural($formula, $first)
   {
-    switch ((string) $formula->getName())
-    {
+    switch ((string) $formula->getName()) {
     case 'invariant':
     case 'impossibility':
     case 'possibility':
@@ -112,6 +105,7 @@ class TagFormulas extends Base
     case 'globally':
     case 'exists-path':
       $sub = $formula->children()[0];
+
       return $first &&
         $this->is_structural($sub, false);
     case 'next':
@@ -140,22 +134,22 @@ class TagFormulas extends Base
     case 'integer-gt':
     case 'integer-ge':
       $result = true;
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $result = $result &&
           $this->is_structural($sub, $first);;
       }
+
       return $result;
     case 'integer-sum':
     case 'integer-product':
     case 'integer-difference':
     case 'integer-division':
       $result = true;
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $result = $result &&
           $this->is_structural($sub, false);
       }
+
       return $result;
     case 'integer-constant':
       return true;
@@ -172,8 +166,7 @@ class TagFormulas extends Base
 
   private function is_reachability($formula, $first)
   {
-    switch ((string) $formula->getName())
-    {
+    switch ((string) $formula->getName()) {
     case 'invariant':
     case 'impossibility':
     case 'possibility':
@@ -182,6 +175,7 @@ class TagFormulas extends Base
     case 'globally':
     case 'finally':
       $sub = $formula->children()[0];
+
       return $first &&
         $this->is_reachability($sub, false);
     case 'next':
@@ -198,6 +192,7 @@ class TagFormulas extends Base
       return true;
     case 'negation':
       $sub = $formula->children()[0];
+
       return $this->is_reachability($sub, $first);
     case 'conjunction':
     case 'disjunction':
@@ -211,22 +206,22 @@ class TagFormulas extends Base
     case 'integer-gt':
     case 'integer-ge':
       $result = true;
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $result = $result &&
           $this->is_reachability($sub, $first);
       }
+
       return $result;
     case 'integer-sum':
     case 'integer-product':
     case 'integer-difference':
     case 'integer-division':
       $result = true;
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $result = $result &&
           $this->is_reachability($sub, false);
       }
+
       return $result;
     case 'integer-constant':
       return true;
@@ -243,12 +238,12 @@ class TagFormulas extends Base
 
   private function is_ctl($formula, $in_ctl)
   {
-    switch ((string) $formula->getName())
-    {
+    switch ((string) $formula->getName()) {
     case 'invariant':
     case 'impossibility':
     case 'possibility':
       $sub = $formula->children()[0];
+
       return $this->is_ltl($sub, false);
     case 'all-paths':
     case 'exists-path':
@@ -258,12 +253,12 @@ class TagFormulas extends Base
         ($subname == 'finally') ||
         ($subname == 'next') ||
         ($subname == 'until'))
+
         return $this->is_ctl($sub, true);
     case 'globally':
     case 'finally':
     case 'next':
-      foreach ($formula->children() as $child)
-      {
+      foreach ($formula->children() as $child) {
         if ($child->getName() != 'if-no-successor' &&
             $child->getName() != 'steps')
         {
@@ -273,6 +268,7 @@ class TagFormulas extends Base
     case 'until':
       $before = $formula->before->children()[0];
       $reach  = $formula->reach->children()[0];
+
       return $in_ctl &&
         $this->is_ctl($before, false) &&
         $this->is_ctl($reach , false);
@@ -287,6 +283,7 @@ class TagFormulas extends Base
       return true;
     case 'negation':
       $sub = $formula->children()[0];
+
       return $this->is_ctl($sub, false);
     case 'conjunction':
     case 'disjunction':
@@ -304,11 +301,11 @@ class TagFormulas extends Base
     case 'integer-gt':
     case 'integer-ge':
       $result = true;
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $result = $result &&
           $this->is_ctl($sub, false);;
       }
+
       return $result;
     case 'integer-constant':
       return true;
@@ -325,24 +322,24 @@ class TagFormulas extends Base
 
   private function is_ltl($formula, $first)
   {
-    switch ((string) $formula->getName())
-    {
+    switch ((string) $formula->getName()) {
     case 'invariant':
     case 'impossibility':
     case 'possibility':
       $sub = $formula->children()[0];
+
       return $first &&
         $this->is_ltl($sub, false);
     case 'all-paths':
     case 'exists-path':
       $sub = $formula->children()[0];
+
       return $first &&
         $this->is_ltl($sub, false);
     case 'globally':
     case 'finally':
     case 'next':
-      foreach ($formula->children() as $child)
-      {
+      foreach ($formula->children() as $child) {
         if ($child->getName() != 'if-no-successor' &&
             $child->getName() != 'steps')
         {
@@ -352,6 +349,7 @@ class TagFormulas extends Base
     case 'until':
       $before = $formula->before->children()[0];
       $reach  = $formula->reach->children()[0];
+
       return
         $this->is_ltl($before, false) &&
         $this->is_ltl($reach , false);
@@ -366,6 +364,7 @@ class TagFormulas extends Base
       return true;
     case 'negation':
       $sub = $formula->children()[0];
+
       return $this->is_ltl($sub, $first);
     case 'conjunction':
     case 'disjunction':
@@ -379,22 +378,22 @@ class TagFormulas extends Base
     case 'integer-gt':
     case 'integer-ge':
       $result = true;
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $result = $result &&
           $this->is_ltl($sub, $first);
       }
+
       return $result;
     case 'integer-sum':
     case 'integer-product':
     case 'integer-difference':
     case 'integer-division':
       $result = true;
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $result = $result &&
           $this->is_ltl($sub, false);
       }
+
       return $result;
     case 'integer-constant':
       return true;

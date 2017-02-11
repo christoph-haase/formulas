@@ -199,6 +199,8 @@ class BoundedSearch :
             self.__label_states_isfireable (formula)
         elif formula.op == Formula.LEQ :
             self.__label_states_leq (formula)
+        elif formula.op == Formula.EQ :
+            self.__label_states_eq (formula)
         elif formula.op == Formula.NOT :
             self.label_states (formula.sub1)
             self.__label_states_not (formula)
@@ -265,6 +267,24 @@ class BoundedSearch :
             a = self.__label_states_eval_int (marking, formula.sub1)
             b = self.__label_states_eval_int (marking, formula.sub2)
             if a <= b :
+                marking.formulas_sat.add (formula)
+                nr_sat += 1
+
+        print "smc:   %d states sat, %d unsat, 0 undef" % \
+                (nr_sat, len (self.states) - nr_sat)
+
+    def __label_states_eq (self, formula) :
+        print "smc: labelling formula:", formula
+        assert (formula.op == Formula.EQ)
+        assert (formula.sub1 != None)
+        assert (formula.sub2 != None)
+
+        nr_sat = 0
+
+        for marking in self.states :
+            a = self.__label_states_eval_int (marking, formula.sub1)
+            b = self.__label_states_eval_int (marking, formula.sub2)
+            if a == b :
                 marking.formulas_sat.add (formula)
                 nr_sat += 1
 
@@ -621,6 +641,7 @@ class Formula :
     F            = 15
     X            = 16
     U            = 17
+    EQ           = 18
 
     def __init__ (self, op = None, sub1 = None, sub2 = None) :
         self.op = op
@@ -720,7 +741,8 @@ class Formula :
         elif self.op == Formula.TRUE or \
                 self.op == Formula.FALSE or \
                 self.op == Formula.IS_FIREABLE or \
-                self.op == Formula.LEQ :
+                self.op == Formula.LEQ or \
+                self.op == Formula.EQ :
             return
         else :
             raise Exception, '"%s": Formula::rewrite, internal error' % self
@@ -854,6 +876,7 @@ class Formula :
             return self.sub1.__easy_syntax_eq (g.sub1)
         elif self.op == Formula.OR or \
                 self.op == Formula.LEQ or \
+                self.op == Formula.EQ or \
                 self.op == Formula.AND or \
                 self.op == Formula.EU or \
                 self.op == Formula.U :
@@ -877,6 +900,8 @@ class Formula :
             return s + ")"
         elif self.op == Formula.LEQ :
             return "(" + str (self.sub1) + " <= " + str (self.sub2) + ")"
+        elif self.op == Formula.EQ :
+            return "(" + str (self.sub1) + " == " + str (self.sub2) + ")"
         elif self.op == Formula.NOT :
             return "(not " + str (self.sub1) + ")"
         elif self.op == Formula.OR :
@@ -971,6 +996,10 @@ class Formula :
             f.sub2 = Formula.__read_mcc15_parse_formula (net, xmltree[1])
         elif xmltree.tag == '{http://mcc.lip6.fr/}integer-le' :
             f.op = Formula.LEQ
+            f.sub1 = Formula.__read_mcc15_parse_formula (net, xmltree[0])
+            f.sub2 = Formula.__read_mcc15_parse_formula (net, xmltree[1])
+        elif xmltree.tag == '{http://mcc.lip6.fr/}integer-eq' :
+            f.op = Formula.EQ
             f.sub1 = Formula.__read_mcc15_parse_formula (net, xmltree[0])
             f.sub2 = Formula.__read_mcc15_parse_formula (net, xmltree[1])
         elif xmltree.tag == '{http://mcc.lip6.fr/}is-fireable' :

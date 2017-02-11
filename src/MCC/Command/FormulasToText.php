@@ -4,7 +4,6 @@ namespace MCC\Command;
 use \Symfony\Component\Console\Input\InputInterface;
 use \Symfony\Component\Console\Output\OutputInterface;
 use \Symfony\Component\Console\Input\InputOption;
-use \MCC\Command\Base;
 use \MCC\Formula\EquivalentElements;
 
 class FormulasToText extends Base
@@ -41,8 +40,7 @@ class FormulasToText extends Base
   protected function perform()
   {
     $this->ep = new EquivalentElements($this->sn_model, $this->pt_model);
-    if ($this->sn_model != null)
-    {
+    if ($this->sn_model != null) {
       $this->convert(
         $this->sn_input,
         $this->sn_output,
@@ -50,8 +48,7 @@ class FormulasToText extends Base
         $this->ep->ctransitions
       );
     }
-    if ($this->pt_model != null)
-    {
+    if ($this->pt_model != null) {
       $this->convert(
         $this->pt_input,
         $this->pt_output,
@@ -61,15 +58,15 @@ class FormulasToText extends Base
     }
   }
 
-  private function convert ($input, $output, $places, $transitions)
+  private function convert($input, $output, $places, $transitions)
   {
     if (file_exists($output))
       unlink($output);
-    if (! file_exists($input))
-    {
+    if (! file_exists($input)) {
       $this->console_output->writeln(
         "<error>Formula file {$input} not found.</error>"
       );
+
       return;
     }
     $xml = $this->load_xml(file_get_contents($input));
@@ -77,8 +74,7 @@ class FormulasToText extends Base
     $this->progress->setRedrawFrequency(max(1, $quantity / 100));
     $this->progress->start($this->console_output, $quantity);
     $result = array();
-    foreach ($xml->property as $property)
-    {
+    foreach ($xml->property as $property) {
       $result[] = $this->translate_property($property, $places, $transitions);
       $this->progress->advance();
     }
@@ -107,8 +103,7 @@ class FormulasToText extends Base
       $places,
       $transitions
     );
-    if ($property->{'expected-result'})
-    {
+    if ($property->{'expected-result'}) {
       $expected = (string) $property->{'expected-result'}->value;
       $explanation = (string) $property->{'expected-result'}->explanation;
 /*       $result = <<<EOS */
@@ -126,8 +121,7 @@ Property {$id}
     {$formula}
   end.
 EOS;
-    }
-    else {
+    } else {
 /*       $result = <<<EOS */
 /* Property {$id} */
 /*   "{$description}" */
@@ -143,14 +137,14 @@ Property {$id}
   end.
 EOS;
     }
+
     return $result;
   }
 
   private function translate_formula($formula, $places, $transitions, $in_nary = false)
   {
     $result = null;
-    switch ((string) $formula->getName())
-    {
+    switch ((string) $formula->getName()) {
     /* case 'invariant': */
     /*   $sub = $formula->children()[0]; */
     /*   $result = 'I ' . */
@@ -192,7 +186,7 @@ EOS;
       /* } */
       /* $result = "X{$steps}{$succ} " . */
       $sub = $formula->children()[0];
-      $result = 'X ' .  
+      $result = 'X ' .
         $this->translate_formula($sub, $places, $transitions);
       break;
     case 'globally':
@@ -213,7 +207,7 @@ EOS;
       /* if ($strength == 'weak') */
       /* { */
       /*   $operator = 'W'; */
-      /* } else if ($strength == 'strong') */
+      /* } elseif ($strength == 'strong') */
       /* { */
       $operator = 'U';
       /* } */
@@ -246,17 +240,13 @@ EOS;
     /*   break; */
     case 'is-fireable':
       $transition = (string) $formula->transition;
-      foreach ($formula->transition as $transition)
-      {
+      foreach ($formula->transition as $transition) {
         $names[] = $transitions[(string) $transition]->name;
       }
       $name = null;
-      if (count($names) == 1)
-      {
+      if (count($names) == 1) {
         $name = '"' . $names[0] . '"';
-      }
-      else
-      {
+      } else {
         $name = '("' . implode('", "', $names) . '")';
       }
       $result = "{$name}?";
@@ -274,16 +264,14 @@ EOS;
       break;
     case 'conjunction':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub, $places, $transitions, true);
       }
       $result = '(' . implode(' & ', $res) . ')';
       break;
     case 'disjunction':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub, $places, $transitions, true);
       }
       $result = '(' . implode(' | ', $res) . ')';
@@ -336,10 +324,16 @@ EOS;
     /*   } */
     /*   $result = '(' . implode(' < ', $res) . ')'; */
     /*   break; */
+    case 'integer-eq':
+      $res = array();
+      foreach ($formula->children() as $sub) {
+        $res[] = $this->translate_formula($sub, $places, $transitions, true);
+      }
+      $result = '(' . implode(' == ', $res) . ')';
+      break;
     case 'integer-le':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub, $places, $transitions, true);
       }
       $result = '(' . implode(' <= ', $res) . ')';
@@ -366,8 +360,7 @@ EOS;
       break;
     case 'integer-sum':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub, $places, $transitions, true);
       }
       $result = '(' . implode(' + ', $res) . ')';
@@ -382,8 +375,7 @@ EOS;
     /*   break; */
     case 'integer-difference':
       $res = array();
-      foreach ($formula->children() as $sub)
-      {
+      foreach ($formula->children() as $sub) {
         $res[] = $this->translate_formula($sub, $places, $transitions, true);
       }
       $result = '(' . implode(' - ', $res) . ')';
@@ -398,8 +390,7 @@ EOS;
     /*   break; */
     case 'place-bound':
       $res = array();
-      foreach ($formula->place as $place)
-      {
+      foreach ($formula->place as $place) {
         $id = (string) $place;
         $name = $places[$id]->name;
         $res[] = '"' . $name . '"';
@@ -408,8 +399,7 @@ EOS;
       break;
     case 'tokens-count':
       $res = array();
-      foreach ($formula->place as $place)
-      {
+      foreach ($formula->place as $place) {
         $id = (string) $place;
         $name = $places[$id]->name;
         $res[] = '"' . $name . '"';
@@ -421,10 +411,10 @@ EOS;
         "<warning>Error: unknown node {$formula->getName()}</warning>"
       );
     }
-    if ($in_nary)
-    {
+    if ($in_nary) {
       $result = "({$result})";
     }
+
     return $result;
   }
 
